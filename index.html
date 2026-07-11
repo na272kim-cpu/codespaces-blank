@@ -854,12 +854,18 @@
                 .filter(Boolean);
             const block = lines.join('\n');
 
+            // 1. 대표 이메일 추출
             const email = block.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
-            const phoneMatches = block.match(/(?:\+82[-\s]?)?(?:01[016789]|02|0[3-9]{1,2}[1-5])[-\s]?\d{3,4}[-\s]?\d{4}/g) || [];
+
+            // 2. 다중 연락처 추출 (더 유연한 공백/점 대응 정규식)
+            const phoneMatches = block.match(/(?:\+82[-\s]?)?(?:01[016789]|02|0[3-9]{1,2}[1-5])[-\s. ]?\d{3,4}[-\s. ]?\d{4}/g) || [];
             const phone = phoneMatches[0] || '';
             const phone2 = phoneMatches[1] || '';
+
+            // 3. 웹사이트 추출
             const website = block.match(/https?:\/\/[^\s]+|www\.[^\s]+/i)?.[0] || '';
 
+            // 4. 국가 판별
             let country = '대한민국';
             const lowerBlock = block.toLowerCase();
             if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
@@ -870,60 +876,84 @@
                 country = '미국';
             }
 
+            // 5. 각 라인에서 이미 추출된 이메일, 전화번호, 웹사이트를 지워서 오독을 원천 차단 (Subtractive Cleaning)
             const companyPatterns = /(회사|주식회사|㈜|컴퍼니|솔루션|서비스|시스템|스튜디오|네트워크|테크|테크놀로지|미디어|파이낸스|컨설팅|파트너스|bank|finance|consulting|partners|group|labs|lab|software|soft|systems|solutions|technology|tech|studio|media|service|services|corp|ltd|llc|co\.)/i;
-            const rolePatterns = /(대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|직책|담당|개발자|엔지니어|기획자|디자이너|마케터|운영|관리|총괄|주임)/i;
+            const rolePatterns = /(대표|대표이사|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|직책|담당|개발자|엔지니어|기획자|디자이너|마케터|운영|관리|총괄|주임|개발팀장|본부장)/i;
             const addressPatterns = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|해외|[가-힣]+(?:시|도|구|군|로|길|읍|면|동))|주소|우편|번지/i;
             const koreanNamePattern = /^[가-힣]{2,5}$/;
             const englishNamePattern = /^[A-Za-z][A-Za-z\s.'-]{1,25}$/;
-            const ignorePatterns = /회사|주식회사|㈜|컴퍼니|솔루션|서비스|시스템|스튜디오|네트워크|테크|테크놀로지|미디어|파이낸스|컨설팅|파트너스|bank|finance|consulting|partners|group|labs|lab|software|soft|systems|solutions|technology|tech|studio|media|service|services|corp|ltd|llc|co\.|대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|직책|담당|개발자|엔지니어|기획자|디자이너|마케터|운영|관리|총괄|주임|@|http|www|전화|휴대|이메일|주소|tel|mobile/i;
 
             let company = '';
             let role = '';
             let address = '';
             let name = '';
 
-            for (const line of lines) {
-                const lowered = line.toLowerCase();
+            const cleanedLines = lines.map(line => {
+                let cleaned = line;
+                // 이메일 제거
+                if (email) cleaned = cleaned.replace(email, '');
+                // 연락처 제거
+                phoneMatches.forEach(p => {
+                    cleaned = cleaned.replace(p, '');
+                });
+                // 웹사이트 제거
+                if (website) cleaned = cleaned.replace(website, '');
+                
+                // 특수문자 정돈
+                return cleaned.replace(/^[•·\-\s:,]+|[•·\-\s:,]+$/g, '').trim();
+            }).filter(Boolean);
 
-                if (!email && /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(line)) {
-                    continue;
-                }
-                if (!phone && /(?:\+82[-\s]?)?(?:01[016789]|02|0[3-9]{1,2}[1-5])[-\s]?\d{3,4}[-\s]?\d{4}/.test(line)) {
-                    continue;
-                }
-                if (!website && /https?:\/\/[^\s]+|www\.[^\s]+/i.test(line)) {
-                    continue;
-                }
-
-                if (!address && addressPatterns.test(line) && !/^[가-힣]{2,5}$/.test(line.replace(/[•·\-\s]+/g, ''))) {
-                    address = line;
-                    continue;
-                }
-
-                if (!role && rolePatterns.test(line) && !companyPatterns.test(line)) {
-                    role = line;
-                    continue;
-                }
-
-                if (!company && companyPatterns.test(line) && !/email|phone|website|address/.test(lowered)) {
-                    company = line;
-                    continue;
-                }
-
-                if (!name && line.length <= 30) {
-                    const cleanLine = line.replace(/[•·\-\s]+/g, '');
-                    const isLikelyName = koreanNamePattern.test(cleanLine) || englishNamePattern.test(cleanLine);
-                    if (isLikelyName) {
-                        name = line;
-                    } else if (!ignorePatterns.test(lowered) && !companyPatterns.test(line) && !rolePatterns.test(line) && !addressPatterns.test(line)) {
-                        name = line;
+            // 6. 주소 추출 (가장 긴 라인 위주 혹은 패턴 매칭)
+            for (const line of cleanedLines) {
+                if (addressPatterns.test(line) && !companyPatterns.test(line) && !rolePatterns.test(line)) {
+                    // 이름으로 잘못 인식되지 않는 주소 필터
+                    const trimmedLine = line.replace(/[•·\-\s]+/g, '');
+                    if (!koreanNamePattern.test(trimmedLine) && trimmedLine.length > 5) {
+                        address = line;
+                        break;
                     }
                 }
             }
 
+            // 7. 직급(role) 추출 - 라인에서 직급 단어만 추출하여 깔끔하게 분리
+            for (const line of cleanedLines) {
+                const roleMatch = line.match(rolePatterns);
+                if (roleMatch) {
+                    role = roleMatch[0]; // 전체 라인이 아니라 오직 직급 단어('대표' 등)만 추출!
+                    break;
+                }
+            }
+
+            // 8. 회사명(company) 추출
+            for (const line of cleanedLines) {
+                if (companyPatterns.test(line) && !addressPatterns.test(line)) {
+                    company = line;
+                    break;
+                }
+            }
+
+            // 9. 이름(name) 추출 - 이제 남은 정제된 라인들 중에서 가장 이름다운 2~5글자의 한글 혹은 적절한 영어를 선택!
+            for (const line of cleanedLines) {
+                const cleanLine = line.replace(/[•·\-\s]+/g, '').trim();
+                
+                // 직급 단어가 포함되어 있다면 제거한 나머지를 이름 후보로 검사 (예: '이명현 대표' -> '이명현')
+                let nameCandidate = cleanLine;
+                const roleMatch = line.match(rolePatterns);
+                if (roleMatch) {
+                    nameCandidate = cleanLine.replace(roleMatch[0], '').trim();
+                }
+
+                if (koreanNamePattern.test(nameCandidate) || englishNamePattern.test(nameCandidate)) {
+                    name = nameCandidate;
+                    break;
+                }
+            }
+
+            // 10. 만약 이름을 여전히 못 찾았다면, ignorePatterns가 없고 짧은 라인을 차선책으로 선택
             if (!name) {
-                const fallbackLine = lines.find(line => !ignorePatterns.test(line.toLowerCase()) && line.length <= 30) || '';
-                name = fallbackLine;
+                const ignorePatterns = /회사|주식회사|지점|본사|㈜|컴퍼니|솔루션|대표|이사|부장|차장|과장|대리|팀장|@|http|www|전화|주소|tel|mobile/i;
+                const fallback = cleanedLines.find(line => !ignorePatterns.test(line) && line.length <= 15) || '';
+                name = fallback.replace(/[•·\-\s]+/g, '').trim();
             }
 
             const normalized = {
