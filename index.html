@@ -1320,7 +1320,7 @@
                 row.address,
                 row.website,
                 row.notes,
-                row.imageUrl || ''
+                row.imageUrl ? '[명함 이미지 있음]' : '[이미지 없음]'
             ]);
 
             // Excel XML 구조 작성 (MIME: application/vnd.ms-excel)
@@ -1357,12 +1357,7 @@
                     \x3ctbody\x3e
                         ${rows.map(rowFields => `
                             \x3ctr\x3e
-                                ${rowFields.map((val, colIdx) => {
-                                    if (colIdx === 10 && val && val.startsWith('data:image/')) {
-                                        return `\x3ctd style="text-align: center; vertical-align: middle; height: 60px;"\x3e\x3cimg src="${val}" width="96" height="60" style="display:block; margin:auto;" /\x3e\x3c/td\x3e`;
-                                    }
-                                    return `\x3ctd\x3e${escapeHtml(val || '')}\x3c/td\x3e`;
-                                }).join('')}
+                                ${rowFields.map(val => `\x3ctd\x3e${escapeHtml(val || '')}\x3c/td\x3e`).join('')}
                             \x3c/tr\x3e
                         `).join('')}
                     \x3c/tbody\x3e
