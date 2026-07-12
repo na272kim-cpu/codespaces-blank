@@ -1320,7 +1320,7 @@
                 row.address,
                 row.website,
                 row.notes,
-                row.imageUrl || ''
+                row.imageUrl ? '[명함 이미지 있음]' : '[이미지 없음]'
             ]);
 
             // Excel XML 구조 작성 (MIME: application/vnd.ms-excel)
@@ -1396,7 +1396,7 @@
                 row.address,
                 row.website,
                 row.notes,
-                row.imageUrl || ''
+                row.imageUrl ? '[명함 이미지 있음]' : '[이미지 없음]'
             ]);
 
             let csvContent = headers.join(',') + '\n';
