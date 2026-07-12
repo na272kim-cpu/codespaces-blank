@@ -29,6 +29,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tesseract OCR (로컬 fallback) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- ExcelJS (실제 이미지 내장형 엑셀 다운로드 지원) -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -1301,80 +1303,132 @@
         // 실시간 검색 인풋 리스너
         sheetSearchInput.addEventListener('input', renderSheet);
 
-        // EXCEL 파일 저장 및 다운로드 처리 (XLS XML 형식)
-        exportExcelBtn.addEventListener('click', () => {
+        // EXCEL 파일 저장 및 다운로드 처리 (ExcelJS 활용 - 이미지 실제 내장형 .xlsx 구조)
+        exportExcelBtn.addEventListener('click', async () => {
             if (state.sheetData.length === 0) {
                 showToast("내보낼 데이터가 비어 있습니다.", "error");
                 return;
             }
 
-            const headers = ['이름', '회사명', '직급_부서', '이메일', '연락처1', '연락처2', '국가', '주소', '웹사이트', '비고', '이미지'];
-            const rows = state.sheetData.map(row => [
-                row.name,
-                row.company,
-                row.role,
-                row.email,
-                row.phone,
-                row.phone2,
-                row.country,
-                row.address,
-                row.website,
-                row.notes,
-                row.imageUrl ? '[명함 이미지 있음]' : '[이미지 없음]'
-            ]);
+            try {
+                showToast("명함 이미지를 내장한 정식 엑셀 파일(.xlsx)을 작성 중입니다...", "info");
+                
+                // ExcelJS 라이브러리 가용성 체크
+                if (typeof ExcelJS === 'undefined') {
+                    throw new Error("ExcelJS 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+                }
 
-            // Excel XML 구조 작성 (MIME: application/vnd.ms-excel)
-            let excelTemplate = `\x3chtml xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"\x3e
-            \x3chead\x3e
-                \x3c!--[if gte mso 9]\x3e
-                \x3cxml\x3e
-                    \x3cx:ExcelWorkbook\x3e
-                        \x3cx:ExcelWorksheets\x3e
-                            \x3cx:ExcelWorksheet\x3e
-                                \x3cx:Name\x3e명함 데이터 목록\x3c/x:Name\x3e
-                                \x3cx:WorksheetOptions\x3e
-                                    \x3cx:DisplayGridlines/\x3e
-                                \x3c/x:WorksheetOptions\x3e
-                            \x3c/x:ExcelWorksheet\x3e
-                        \x3c/x:ExcelWorksheets\x3e
-                    \x3c/x:ExcelWorkbook\x3e
-                \x3c/xml\x3e
-                \x3c![endif]--\x3e
-                \x3cmeta charset="utf-8"\x3e
-                \x3cstyle\x3e
-                    table { border-collapse: collapse; }
-                    th { background-color: #f1f5f9; color: #1e293b; font-weight: bold; border: 0.5pt solid #cbd5e1; padding: 6px; }
-                    td { border: 0.5pt solid #e2e8f0; padding: 6px; mso-number-format:"\\@"; }
-                \x3c/style\x3e
-            \x3c/head\x3e
-            \x3cbody\x3e
-                \x3ctable\x3e
-                    \x3cthead\x3e
-                        \x3ctr\x3e
-                            ${headers.map(h => `\x3cth\x3e${escapeHtml(h)}\x3c/th\x3e`).join('')}
-                        \x3c/tr\x3e
-                    \x3c/thead\x3e
-                    \x3ctbody\x3e
-                        ${rows.map(rowFields => `
-                            \x3ctr\x3e
-                                ${rowFields.map(val => `\x3ctd\x3e${escapeHtml(val || '')}\x3c/td\x3e`).join('')}
-                            \x3c/tr\x3e
-                        `).join('')}
-                    \x3c/tbody\x3e
-                \x3c/table\x3e
-            \x3c/body\x3e
-            \x3c/html\x3e`;
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('명함 데이터 목록');
 
-            const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Business_Cards_Data_${Date.now()}.xls`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("스마트 명함 데이터 시트가 EXCEL 파일로 저장되었습니다.");
+                // 테이블 헤더 컬럼 구조화
+                worksheet.columns = [
+                    { header: '이름', key: 'name', width: 14 },
+                    { header: '회사명', key: 'company', width: 20 },
+                    { header: '직급 / 부서', key: 'role', width: 18 },
+                    { header: '이메일', key: 'email', width: 22 },
+                    { header: '연락처1', key: 'phone', width: 16 },
+                    { header: '연락처2', key: 'phone2', width: 16 },
+                    { header: '국가', key: 'country', width: 10 },
+                    { header: '주소', key: 'address', width: 30 },
+                    { header: '웹사이트', key: 'website', width: 20 },
+                    { header: '비고', key: 'notes', width: 24 },
+                    { header: '이미지', key: 'image', width: 18 }
+                ];
+
+                // 헤더 행 스타일 설정
+                const headerRow = worksheet.getRow(1);
+                headerRow.height = 26;
+                headerRow.eachCell((cell) => {
+                    cell.font = { bold: true, color: { argb: 'FF1E293B' }, size: 10 };
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFF1F5F9' }
+                    };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                        left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                        bottom: { style: 'medium', color: { argb: 'FF94A3B8' } },
+                        right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                    };
+                });
+
+                // 데이터 레코드 주입 및 셀별 스타일링
+                for (let i = 0; i < state.sheetData.length; i++) {
+                    const row = state.sheetData[i];
+                    const addedRow = worksheet.addRow({
+                        name: row.name,
+                        company: row.company,
+                        role: row.role,
+                        email: row.email,
+                        phone: row.phone,
+                        phone2: row.phone2,
+                        country: row.country,
+                        address: row.address,
+                        website: row.website,
+                        notes: row.notes,
+                        image: row.imageUrl ? '' : '[이미지 없음]'
+                    });
+
+                    // 행 높이 지정 (이미지가 들어갈 공간 확보)
+                    addedRow.height = 56;
+                    addedRow.eachCell((cell, colNumber) => {
+                        cell.font = { size: 9 };
+                        cell.alignment = { 
+                            vertical: 'middle', 
+                            horizontal: (colNumber === 7 || colNumber === 11) ? 'center' : 'left' 
+                        };
+                        cell.border = {
+                            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+                        };
+                    });
+
+                    // 이미지가 있을 경우, 통합문서의 미디어 리소스로 추가하여 실제 셀 위치에 내장 렌더링
+                    if (row.imageUrl) {
+                        try {
+                            const mimeTypeMatch = row.imageUrl.match(/^data:(image\/[a-zA-Z+.-]+);base64,/);
+                            const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png';
+                            const ext = mimeType.split('/')[1] || 'png';
+                            const base64Data = row.imageUrl.replace(/^data:image\/[a-zA-Z+.-]+;base64,/, '');
+
+                            const imageId = workbook.addImage({
+                                base64: base64Data,
+                                extension: ext
+                            });
+
+                            worksheet.addImage(imageId, {
+                                tl: { col: 10, row: i + 1 }, // 0-indexed (K열 = 10), row는 i+1 (헤더가 Row 0)
+                                ext: { width: 110, height: 68 }, // 최적의 썸네일 해상도 사이즈
+                                editAs: 'oneCell' // 엑셀 셀 열과 행 넓이 조정에 맞추어 이동 연동
+                            });
+                        } catch (imgError) {
+                            console.error("ExcelJS Image Insert Fail: ", imgError);
+                            addedRow.getCell(11).value = '[이미지 삽입 실패]';
+                        }
+                    }
+                }
+
+                // 바이너리 데이터 버퍼 변환 후 다운로드 처리
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Business_Cards_Data_${Date.now()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("명함 이미지가 온전히 내장된 고품격 엑셀 파일(.xlsx)이 다운로드되었습니다.");
+            } catch (error) {
+                console.error("Excel Export Error: ", error);
+                showToast("엑셀 파일 생성 중 오류가 발생했습니다: " + error.message, "error");
+            }
         });
 
         // CSV 파일 저장 및 다운로드 처리 (엑셀 한글 깨짐 방지용 UTF-8 BOM 추가)
