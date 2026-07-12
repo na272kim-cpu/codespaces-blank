@@ -35,8 +35,8 @@ export async function onRequestPost(context) {
             });
         }
 
-        // 5. 구글 Gemini API 엔드포인트 세팅
-        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        // 5. 구글 Gemini API 엔드포인트 및 멀티 모델 폴백 체인 설정
+        const models = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"];
 
         const promptText = `
             역할: 아주 지능적인 명함 스캐너 전문 엔진.
@@ -92,12 +92,44 @@ export async function onRequestPost(context) {
             }
         };
 
-        // 6. Gemini API 호출
-        const response = await fetch(endpointUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(geminiPayload)
-        });
+        // 6. Gemini API 호출 (성공할 때까지 모델 순차 폴백 진행)
+        let response = null;
+        let lastStatus = 0;
+        let lastErrorText = "";
+
+        for (const model of models) {
+            const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            try {
+                const res = await fetch(endpointUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(geminiPayload)
+                });
+
+                if (res.status === 404) {
+                    lastStatus = 404;
+                    lastErrorText = `모델 ${model} 지원 불가 (404 Not Found)`;
+                    continue; // 다음 모델 시도
+                }
+
+                response = res;
+                break; // 404가 아니면 루프 탈출 (성공 혹은 타 오류)
+            } catch (err) {
+                lastStatus = 500;
+                lastErrorText = err.message || "네트워크 에러";
+            }
+        }
+
+        if (!response) {
+            return new Response(JSON.stringify({ 
+                error: "GEMINI_API_ERROR", 
+                message: `Gemini API 호출 전체 실패 (모든 모델 비활성): ${lastStatus}`, 
+                details: lastErrorText 
+            }), {
+                status: lastStatus || 500,
+                headers
+            });
+        }
 
         // 분당 구글 과부하 한도 초과(429) 등의 차단 에러 핸들링
         if (response.status === 429) {

@@ -598,10 +598,15 @@
             try {
                 const response = await fetch(url, options);
                 if (!response.ok) {
-                    throw new Error(`HTTP Error Status: ${response.status}`);
+                    const err = new Error(`HTTP Error Status: ${response.status}`);
+                    err.status = response.status;
+                    throw err;
                 }
                 return await response.json();
             } catch (error) {
+                if (error.status === 404) {
+                    throw error;
+                }
                 if (retries > 0) {
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return fetchWithRetry(url, options, retries - 1, delay * 2);
@@ -764,7 +769,7 @@
                     onProgress("Gemini AI 직접 분석 중...");
                 }
 
-                const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                const models = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"];
 
                 const promptText = `
                     역할: 아주 지능적인 명함 스캐너 전문 엔진.
@@ -820,11 +825,30 @@
                     }
                 };
 
-                const response = await fetchWithRetry(endpointUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                let response = null;
+                let lastError = null;
+
+                for (const model of models) {
+                    const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    try {
+                        response = await fetchWithRetry(endpointUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        break; // 성공 시 루프 탈출
+                    } catch (error) {
+                        if (error.status === 404) {
+                            lastError = `모델 ${model} 지원 불가 (404)`;
+                            continue; // 다음 모델 시도
+                        }
+                        throw error; // 404 이외의 에러는 상위로 전파
+                    }
+                }
+
+                if (!response) {
+                    throw new Error(`Gemini API 호출 전체 실패: ${lastError || '모든 적합 모델 응답 없음'}`);
+                }
 
                 const parsedText = response.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!parsedText) {
