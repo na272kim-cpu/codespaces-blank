@@ -217,13 +217,14 @@
                                     <th class="p-3 min-w-[130px]">주소</th>
                                     <th class="p-3 min-w-[130px]">웹사이트</th>
                                     <th class="p-3 min-w-[130px]">비고</th>
+                                    <th class="p-3 min-w-[100px] text-center">이미지</th>
                                     <th class="p-3 text-center w-14">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="sheetTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <!-- 데이터 로우들이 자바스크립트로 주입됨 -->
                                 <tr id="tablePlaceholder">
-                                    <td colspan="12" class="p-16 text-center text-slate-400">
+                                    <td colspan="13" class="p-16 text-center text-slate-400">
                                         <i class="fa-solid fa-table-list text-3xl mb-3 block text-slate-300"></i>
                                         추출된 명함 정보가 없습니다.<br>왼쪽에서 명함 이미지를 등록하고 분석을 개시하세요.
                                     </td>
@@ -298,6 +299,23 @@
     <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 bg-slate-900 text-white text-xs sm:text-sm font-semibold px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300">
         <span id="toastIcon" class="text-primary-400"><i class="fa-solid fa-circle-check"></i></span>
         <span id="toastMsg">성공적으로 처리되었습니다.</span>
+    </div>
+
+    <!-- 이미지 크게 보기 모달 -->
+    <div id="imageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm transition-opacity duration-300">
+        <div class="relative max-w-4xl max-h-[90vh] bg-white dark:bg-slate-800 rounded-3xl p-3 shadow-2xl overflow-hidden flex flex-col animate-fade-in">
+            <!-- 모달 헤더/조작 버튼 -->
+            <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
+                <button onclick="closeImageModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100/80 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all shadow-md">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- 이미지 영역 -->
+            <div class="overflow-auto custom-scrollbar max-h-[85vh] flex justify-center items-center">
+                <img id="modalImage" src="" class="max-w-full h-auto rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700" alt="명함 이미지 원본">
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript 코드 영역 -->
@@ -492,6 +510,7 @@
                 // 비동기로 Base64 인코딩 미리 진행
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    cardObj.imageUrl = e.target.result;
                     cardObj.base64 = e.target.result.split(',')[1];
                 };
                 reader.readAsDataURL(file);
@@ -633,6 +652,7 @@
                     });
                     
                     // 표 데이터 리스트에 주입
+                    resultData.imageUrl = card.imageUrl;
                     appendCardToSheet(resultData);
                     card.status = 'success';
                     showToast(`✔ [${card.name}] 판독 완료`);
@@ -1095,7 +1115,8 @@
                 country: data.country || '대한민국',
                 address: data.address || '',
                 website: data.website || '',
-                notes: data.notes || ''
+                notes: data.notes || '',
+                imageUrl: data.imageUrl || ''
             };
 
             state.sheetData.push(newRow);
@@ -1123,7 +1144,7 @@
             if (filteredData.length === 0) {
                 sheetTableBody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="p-16 text-center text-slate-400">
+                        <td colspan="13" class="p-16 text-center text-slate-400">
                             <i class="fa-solid fa-table-list text-3xl mb-3 block text-slate-300"></i>
                             ${query ? '검색 필터와 일치하는 명함 데이터가 존재하지 않습니다.' : '데이터 행이 비어 있습니다.'}
                         </td>
@@ -1148,6 +1169,15 @@
                     <td class="p-3 text-slate-500 dark:text-slate-400" contenteditable="true" onblur="updateCellData(${row.id}, 'address', this)">${escapeHtml(row.address)}</td>
                     <td class="p-3 text-primary-500 font-mono" contenteditable="true" onblur="updateCellData(${row.id}, 'website', this)">${escapeHtml(row.website)}</td>
                     <td class="p-3 text-slate-500 dark:text-slate-400" contenteditable="true" onblur="updateCellData(${row.id}, 'notes', this)">${escapeHtml(row.notes)}</td>
+                    <td class="p-3 text-center">
+                        ${row.imageUrl ? `
+                            <div class="inline-block relative group">
+                                <img src="${row.imageUrl}" class="h-10 w-16 object-cover rounded border border-slate-200 dark:border-slate-700 cursor-zoom-in hover:scale-105 active:scale-95 transition-all shadow-sm" onclick="openImageModal('${row.imageUrl}')" title="명함 이미지 크게 보기">
+                            </div>
+                        ` : `
+                            <i class="fa-regular fa-image text-slate-300 dark:text-slate-600 text-lg" title="이미지 없음"></i>
+                        `}
+                    </td>
                     <td class="p-3 text-center">
                         <button class="text-slate-300 hover:text-rose-500 transition-colors" onclick="deleteSheetRow(${row.id})" title="행 삭제">
                             <i class="fa-solid fa-trash-can"></i>
@@ -1183,6 +1213,41 @@
             renderSheet();
             showToast("선택된 명함 데이터 행이 삭제되었습니다.");
         };
+
+        // 이미지 확대 모달 관리자
+        window.openImageModal = function(url) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            if (modal && modalImg) {
+                modalImg.src = url;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden'; // 뒷배경 스크롤 방지
+            }
+        };
+
+        window.closeImageModal = function() {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = ''; // 스크롤 복구
+            }
+        };
+
+        // Esc 키로 모달 닫기 지원 및 모달 바깥 배경 클릭시 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+        
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('imageModal');
+            if (e.target === modal) {
+                closeImageModal();
+            }
+        });
 
         // 수동 빈 행 생성 유틸리티
         addEmptyRowBtn.addEventListener('click', () => {
