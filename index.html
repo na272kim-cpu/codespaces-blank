@@ -1308,7 +1308,7 @@
                 return;
             }
 
-            const headers = ['이름', '회사명', '직급_부서', '이메일', '연락처1', '연락처2', '국가', '주소', '웹사이트', '비고'];
+            const headers = ['이름', '회사명', '직급_부서', '이메일', '연락처1', '연락처2', '국가', '주소', '웹사이트', '비고', '이미지'];
             const rows = state.sheetData.map(row => [
                 row.name,
                 row.company,
@@ -1319,7 +1319,8 @@
                 row.country,
                 row.address,
                 row.website,
-                row.notes
+                row.notes,
+                row.imageUrl || ''
             ]);
 
             // Excel XML 구조 작성 (MIME: application/vnd.ms-excel)
@@ -1383,7 +1384,7 @@
                 return;
             }
 
-            const headers = ['이름', '회사명', '직급_부서', '이메일', '연락처1', '연락처2', '국가', '주소', '웹사이트', '비고'];
+            const headers = ['이름', '회사명', '직급_부서', '이메일', '연락처1', '연락처2', '국가', '주소', '웹사이트', '비고', '이미지'];
             const rows = state.sheetData.map(row => [
                 row.name,
                 row.company,
@@ -1394,7 +1395,8 @@
                 row.country,
                 row.address,
                 row.website,
-                row.notes
+                row.notes,
+                row.imageUrl || ''
             ]);
 
             let csvContent = headers.join(',') + '\n';
