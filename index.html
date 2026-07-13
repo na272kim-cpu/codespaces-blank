@@ -287,6 +287,126 @@
             </div>
         </div>
 
+        <!-- 고품질 부가 정보 가치 증명 섹션 (구글 애드센스 가이드라인 및 정책 준수 부합용 고가치 오리지널 텍스트 가동) -->
+        <div class="bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 sm:p-10 shadow-sm space-y-10">
+            <!-- 섹션 헤더 -->
+            <div class="border-b border-slate-100 dark:border-slate-800 pb-5 text-center sm:text-left">
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-2.5">
+                    <i class="fa-solid fa-book-open text-primary-500"></i> 스마트 명함 디지털화 깊이 알기
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">대량 명함 문자 인식(OCR)을 완벽히 다루기 위한 전문 가이드 및 기술적 보안 세부 사항을 공유합니다.</p>
+            </div>
+
+            <!-- 서브 섹션 그리드 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                <!-- 가이드 1 -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span> 1. 고품질 OCR 인식률을 극대화하는 촬영 팁
+                    </h3>
+                    <p>
+                        명함 정보의 텍스트 변환 정확도는 원본 명함 이미지의 화질과 촬영 환경에 매우 큰 영향을 받습니다. 최고의 판독 정확성을 보장받으시려면 아래의 필수 준수 사항을 체크해 주세요.
+                    </p>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs pl-1 text-slate-500 dark:text-slate-400">
+                        <li><strong>그림자 방지:</strong> 명함 바로 위에서 스마트폰으로 촬영 시 카메라 그림자가 드리워질 수 있습니다. 조명이 측면에서 비추는 장소에서 기울여 촬영한 뒤 정돈해 주세요.</li>
+                        <li><strong>수평 정렬:</strong> 명함의 테두리가 카메라 프레임과 가급적 수평 및 수직이 되도록 촬영해 주시면 AI 및 패턴 정밀 매칭 엔진이 라인 피드를 원활하게 분석합니다.</li>
+                        <li><strong>조명 반사 주의:</strong> 비닐 코팅된 유광 재질이나 은박, 금박 등이 적용된 프리미엄 명함은 스탠드 조명 밑에서 반사광이 심해 글자가 하얗게 소실되기 쉽습니다. 자연광이나 밝은 간접조명 환경을 강력히 권장합니다.</li>
+                    </ul>
+                </div>
+
+                <!-- 가이드 2 -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span> 2. 하이브리드 판독 엔진: Tesseract vs Gemini AI
+                    </h3>
+                    <p>
+                        당사의 Card 2 Sheet 변환 솔루션은 고성능 하이브리드 엔진 아키텍처를 채택하여 사용자의 이용 편의성을 이중으로 백업합니다.
+                    </p>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs pl-1 text-slate-500 dark:text-slate-400">
+                        <li><strong>로컬 Tesseract OCR:</strong> 서버 API 한도가 소진되었거나 독립형 보안 작업이 필요할 때 가동되며, 브라우저 엔진 상에서 한국어와 영어를 직접 대조 분석해 100% 로컬 프라이빗 처리를 지원합니다.</li>
+                        <li><strong>Google Gemini Multi-Modal:</strong> 복잡한 영문 로고 디자인, 다국어 명함, 혹은 사람이 직접 흘려 쓴 볼펜/연필 메모(손글씨)까지 극도로 높은 한글 어휘 사전을 바탕으로 문맥을 추론하여 깔끔한 JSON 데이터 구조로 완성하는 최첨단 생성 AI 판독을 수행합니다.</li>
+                    </ul>
+                </div>
+
+                <!-- 가이드 3 -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span> 3. 추출된 스프레드시트 데이터 활용 및 주소록 통합
+                    </h3>
+                    <p>
+                        명함 시트에서 정제한 데이터를 다양한 채널과 통합하여 업무 프로세스를 한 단계 고도화할 수 있습니다. 당사의 내보내기 필터는 두 가지 범용 표준 규격을 완벽 지원합니다.
+                    </p>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs pl-1 text-slate-500 dark:text-slate-400">
+                        <li><strong>Microsoft Excel (.xlsx) 완벽 연동:</strong> ExcelJS 엔진을 탑재하여, 내려받은 엑셀 시트 내부에 사용자가 업로드했던 실제 명함 썸네일 원본 이미지가 셀 크기에 비례하여 완벽히 내장(Embedded)됩니다. 나중에 시트를 인쇄하거나 정리할 때 실제 카드를 옆에 둔 것처럼 대조가 편합니다.</li>
+                        <li><strong>UTF-8 BOM CSV 출력:</strong> 아웃룩 주소록, 구글 연락처(Google Contacts), Salesforce, HubSpot 등 국내외 전 영역 CRM 데이터베이스에 오류 없이 일괄 임포트될 수 있도록 한글 깨짐 방지 바이트가 정밀 삽입된 호환 CSV를 산출합니다.</li>
+                    </ul>
+                </div>
+
+                <!-- 가이드 4 -->
+                <div class="space-y-3">
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span> 4. 철저한 보안 원칙: 제로-데이터 보존 설계
+                    </h3>
+                    <p>
+                        명함은 현대 비즈니스 미팅에서 성명, 개인 휴대폰 주소, 직통번호, 사무실 위치 등 민감한 고유 식별 정보(PII)를 교환하는 매개체입니다. 당사는 보안을 시스템 최우선 순위로 정의하고 설계했습니다.
+                    </p>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs pl-1 text-slate-500 dark:text-slate-400">
+                        <li><strong>로컬 샌드박스:</strong> 이미지의 드래그 업로드, 로컬 썸네일 렌더링, 엑셀 및 CSV 변환 바이너리 빌드 과정은 이용자 컴퓨터의 크롬/사파리 샌드박스 내부 메모리에서만 완전하게 클라이언트 사이드로 실행됩니다.</li>
+                        <li><strong>위탁 전송 즉시 휘발:</strong> Gemini AI 판독 처리 과정에서 전송되는 이미지는 SSL/TLS 암호화 레이어를 거쳐 API 통신 전용 채널로 전송되며, 데이터 수치 및 판독 포맷 응답과 동시에 Google 및 자사 서버 메모리에서 영구히 자동 소멸되어 어떤 주체도 개인정보를 기록 보존하지 못하도록 보장합니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 자주 묻는 질문 FAQ 섹션 -->
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-8 space-y-6">
+                <h3 class="font-bold text-lg text-slate-950 dark:text-white flex items-center gap-2 justify-center sm:justify-start">
+                    <i class="fa-solid fa-clipboard-question text-primary-500"></i> 자주 묻는 질문 (FAQ)
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm">
+                    <!-- Q1 -->
+                    <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                        <h4 class="font-bold text-slate-900 dark:text-white flex items-start gap-1.5">
+                            <span class="text-primary-500 font-black">Q.</span> 한 번에 최대 몇 장까지의 명함을 업로드하고 변환할 수 있나요?
+                        </h4>
+                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed pl-4">
+                            대기열 처리의 안정성과 브라우저의 성능 과부하를 고려하여 한 번에 최대 **50장**까지 일괄 업로드 및 큐 처리가 가능하도록 세팅되어 있습니다. 50장을 변환 완료한 뒤, 우측 하단의 "표 전체 비우기" 혹은 다운로드를 마친 뒤 대기목록을 리셋하여 연속적으로 무제한 변환을 진행하실 수 있습니다.
+                        </p>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                        <h4 class="font-bold text-slate-900 dark:text-white flex items-start gap-1.5">
+                            <span class="text-primary-500 font-black">Q.</span> 영어, 일본어, 중국어 등 외국어로 제작된 해외 바이어 명함도 인식이 가능한가요?
+                        </h4>
+                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed pl-4">
+                            네, 전적으로 가능합니다. Google Gemini API 엔진은 수십 개 언어 사전을 실시간 교차 검증하므로, 영문 명함은 물론 한자(중국어) 및 가타카나/히라가나(일본어)까지 완벽하게 추출하여 이름, 소속, 이메일, 웹사이트를 정확히 정리합니다. 또한 로컬 OCR 모델 역시 다국어 결합 라이브러리(`kor+eng`)가 적용되어 기본 외국어를 즉시 매칭합니다.
+                        </p>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                        <h4 class="font-bold text-slate-900 dark:text-white flex items-start gap-1.5">
+                            <span class="text-primary-500 font-black">Q.</span> 엑셀 파일 내보내기 시 다운로드 파일 안에 명함 사진이 표시되지 않아요.
+                        </h4>
+                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed pl-4">
+                            일반적인 가짜 CSV 내보내기와 달리, 당사 서비스의 **"EXCEL" 다운로드**는 고급 ExcelJS 렌더러를 사용해 엑셀 파일 내부 셀 바이너리에 명함 이미지 객체를 원본 비율로 완벽 이식합니다. 간혹 보안 매크로 정책이 극도로 엄격한 일부 기업용 한컴오피스 한셀이나 특정 구버전 뷰어에서는 이미지가 일시 차단될 수 있으므로 Microsoft Excel 정식 365 버전이나 구글 스프레드시트(Google Sheets) 업로드 조회를 권장합니다.
+                        </p>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                        <h4 class="font-bold text-slate-900 dark:text-white flex items-start gap-1.5">
+                            <span class="text-primary-500 font-black">Q.</span> 명함에 수동으로 직접 적어 둔 수필 손글씨 메모도 잘 파싱이 되나요?
+                        </h4>
+                        <p class="text-slate-500 dark:text-slate-400 leading-relaxed pl-4">
+                            본 서비스의 Gemini AI 판독 로직은 이미지 속에 적힌 타이핑 활자 폰트뿐 아니라, 볼펜 등으로 자필 서술된 잉크 획 정보까지 세밀하게 분해 판독하도록 프롬프트 설계가 완성되어 있습니다. 명함 좌측, 우측 구석에 적힌 '여자대표', '용산미팅건', '2차미팅추천' 등의 필기 정보는 시트의 가장 마지막 열인 **"비고"** 필드에 정밀 검증을 거친 한글로 정제되어 자동 분리 수록됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- 푸터 -->
@@ -294,8 +414,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
             <p>© 2026 OCR.GOOD Business Card Board.</p>
             <div class="flex items-center gap-6">
-                <a href="#" class="hover:text-primary-500 transition-colors">이용 약관</a>
-                <a href="#" class="hover:text-primary-500 transition-colors">개인정보 처리방침</a>
+                <a href="terms.html" class="hover:text-primary-500 transition-colors">이용 약관</a>
+                <a href="privacy.html" class="hover:text-primary-500 transition-colors">개인정보 처리방침</a>
                 <a href="form.html" target="_blank" class="hover:text-primary-500 transition-colors">문의하기</a>
             </div>
         </div>
