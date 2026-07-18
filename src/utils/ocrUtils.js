@@ -108,8 +108,16 @@ function normalizePhone(value) {
     const raw = (value || '').trim();
     if (!raw) return '';
 
-    const digits = raw.replace(/\D/g, '');
+    let digits = raw.replace(/\D/g, '');
     if (!digits) return '';
+
+    if (digits.length === 12 && digits.startsWith('82')) {
+        digits = '0' + digits.slice(2);
+    }
+
+    if (digits.length === 10 && digits.startsWith('10')) {
+        digits = '0' + digits;
+    }
 
     if (digits.length === 11 && digits.startsWith('010')) {
         return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
@@ -131,10 +139,24 @@ function normalizePhone(value) {
 }
 
 function normalizeWebsite(value) {
-    const normalized = (value || '').trim();
+    let normalized = (value || '').trim();
     if (!normalized) return '';
-    if (/^https?:\/\//i.test(normalized)) return normalized;
-    if (/^www\./i.test(normalized)) return `https://${normalized}`;
+
+    normalized = normalized.replace(/\s+/g, '');
+    normalized = normalized.replace(/\.cokr$/i, '.co.kr');
+    normalized = normalized.replace(/\.co[\s\-]?kr$/i, '.co.kr');
+    normalized = normalized.replace(/\.c0kr$/i, '.co.kr');
+    normalized = normalized.replace(/\.c0\.kr$/i, '.co.kr');
+    normalized = normalized.replace(/\.cokr\//i, '.co.kr/');
+    normalized = normalized.replace(/^(?:https?:\/\/)?www\.(.+)$/i, 'www.$1');
+    normalized = normalized.replace(/(https?:\/\/)?(www\.)?(.+)$/i, (full, proto, www, rest) => {
+        return `https://${www || 'www.'}${rest}`;
+    });
+
+    if (!/^https?:\/\//i.test(normalized)) {
+        normalized = `https://${normalized}`;
+    }
+
     return normalized;
 }
 
@@ -192,22 +214,28 @@ export function parseOcrTextToCardData(text) {
     // 1. 대표 이메일 추출
     const email = block.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
 
-    // 2. 다중 연락처 추출 (글로벌 괄호형, 국가코드형, 대시형, 공백형 모두 지원하는 범용 정규식)
-    // Tesseract의 대표 오독 패턴(0<->O, 1<->l/I)까지 미리 통합 수용
-    const rawPhoneMatches = block.match(/(?:\+?[\dOolI]{1,4}[-\s.()]*){2,}[\dOolI]{4}/g) || [];
+    // 2. 다중 연락처 추출: 각 라인별로 분리하여 
+    // 줄바꿈이 있는 경우 여러 번호가 하나로 합쳐지지 않도록 방지
+    const rawPhoneMatches = [];
+    const phoneLineRegex = /(?:\+?[\dOolI]{1,4}[-\s.()]*){2,}[\dOolI]{4}/g;
+    for (const line of lines) {
+        const lineMatches = line.match(phoneLineRegex) || [];
+        rawPhoneMatches.push(...lineMatches);
+    }
+
     const phoneMatches = rawPhoneMatches.map(p => {
-        // 오독 글자 자동 복원 및 포맷 정돈
         let cleanedPhone = p.replace(/[O_o]/g, '0')
                             .replace(/[lIi]/g, '1')
                             .trim();
         return cleanedPhone;
     }).filter(p => {
-        // 공백 및 기호 제거 후 순수 숫자만 추렸을 때 7자리에서 15자리 사이의 전형적인 전화번호 포맷인지 필터링
         const digitsOnly = p.replace(/[^0-9]/g, '');
         return digitsOnly.length >= 7 && digitsOnly.length <= 15;
     });
-    const phone = phoneMatches[0] || '';
-    const phone2 = phoneMatches[1] || '';
+
+    const normalizedPhones = [...new Set(phoneMatches.map(normalizePhone).filter(Boolean))];
+    const phone = normalizedPhones[0] || '';
+    const phone2 = normalizedPhones[1] || '';
 
     // 3. 웹사이트 추출
     const website = block.match(/https?:\/\/[^\s]+|www\.[^\s]+/i)?.[0] || '';
@@ -262,9 +290,9 @@ export function parseOcrTextToCardData(text) {
     }
 
     // 5. 각 라인에서 이미 추출된 이메일, 전화번호, 웹사이트를 지워서 오독을 원천 차단 (Subtractive Cleaning)
-    const companyPatterns = /(회사|주식회사|㈜|컴퍼니|솔루션|서비스|시스템|스튜디오|네트워크|테크|테크놀로지|미디어|파이낸스|컨설팅|파트너스|bank|finance|consulting|partners|group|labs|lab|software|soft|systems|solutions|technology|tech|studio|media|service|services|corp|ltd|llc|co\.|cosmetics|korea)/i;
+    const companyPatterns = /(회사|주식회사|㈜|컴퍼니|솔루션|서비스|시스템|스튜디오|네트워크|테크|테크놀로지|미디어|파이낸스|컨설팅|파트너스|bank|finance|consulting|partners|group|labs|lab|software|soft|systems|solutions|technology|tech|studio|media|service|services|corp|ltd|llc|co\.|cosmetics)/i;
     const rolePatterns = /(대표|대표이사|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|직책|담당|개발자|엔지니어|기획자|디자이너|마케터|운영|관리|총괄|주임|개발팀장|본부장)/i;
-    const addressPatterns = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|해외|[가-힣]+(?:시|도|구|군|로|길|읍|면|동))|주소|우편|번지|\b(street|road|st|rd|ave|avenue|blvd|highway|way|lane|drive|dr|court|ct|plaza|place|pl|square|sq|building|bldg|floor|fl|suite|ste|room|rm|block|blk|district|county|city|state|zip|postal|zone|seoul|incheon|busan|daegu|daejeon|gwangju|ulsan|korea|ro|gu|daero|dong|gil)\b/i;
+    const addressPatterns = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|해외|[가-힣]+(?:시|도|구|군|로|길|읍|면|동))|주소|우편|번지|\b(street|road|st|rd|ave|avenue|blvd|highway|way|lane|drive|dr|court|ct|plaza|place|pl|square|sq|building|bldg|floor|fl|suite|ste|room|rm|block|blk|district|county|city|state|zip|postal|zone|seoul|incheon|busan|daegu|daejeon|gwangju|ulsan|ro|gu|daero|dong|gil)\b/i;
     const koreanNamePattern = /^[가-힣]{2,5}$/;
     const englishNamePattern = /^[A-Za-z][A-Za-z\s.'-]{1,25}$/;
     const shortNamePattern = /^[가-힣]{2,4}$/;
@@ -290,12 +318,33 @@ export function parseOcrTextToCardData(text) {
         return cleaned.replace(/^[•·\-\s:,]+|[•·\-\s:,]+$/g, '').trim();
     }).filter(Boolean);
 
-    // 6. 주소 추출 (명확한 주소 패턴만 받음)
-    for (const line of cleanedLines) {
+    // 회사명 라벨이 명시된 경우 우선 추출
+    const companyLabelLine = lines.find(line => /(?:회사명|Company Name|Brand Name)\s*[:\-]?\s*(.+)$/i.test(line));
+    if (companyLabelLine) {
+        const match = companyLabelLine.match(/(?:회사명|Company Name|Brand Name)\s*[:\-]?\s*(.+)$/i);
+        if (match?.[1]) {
+            company = match[1].trim();
+        }
+    }
+
+    if (!company) {
+        const companyLine = lines.find(line => /\b(?:Co\.|Co|Ltd|LLC|Corporation|Inc|COSMETICS|COMPANY|KOREA)\b/i.test(line) && !/^(?:www\.|https?:\/\/|instagram|whatsapp|email|이메일)/i.test(line));
+        if (companyLine) {
+            company = companyLine.replace(/^(?:회사명|Company Name|Brand Name)\s*[:\-]?\s*/i, '').trim();
+        }
+    }
+
+    // 6. 주소 추출 (명확한 주소 패턴만 받음, 인접한 주소 라인은 묶어서 처리)
+    for (let idx = 0; idx < cleanedLines.length; idx += 1) {
+        const line = cleanedLines[idx];
         const trimmed = line.replace(/[•·\-\s]+/g, '');
         if (addressPatterns.test(line) && !companyPatterns.test(line) && !rolePatterns.test(line) && !noiseLabelPatterns.test(line)) {
             if (!koreanNamePattern.test(trimmed) && trimmed.length > 6) {
                 address = line;
+                const nextLine = cleanedLines[idx + 1] || '';
+                if (nextLine && addressPatterns.test(nextLine) && !companyPatterns.test(nextLine) && !noiseLabelPatterns.test(nextLine)) {
+                    address = `${address}, ${nextLine}`;
+                }
                 break;
             }
         }
@@ -317,6 +366,7 @@ export function parseOcrTextToCardData(text) {
         if (!trimmed || trimmed.length < 3) return false;
         if (noiseLabelPatterns.test(trimmed)) return false;
         if (addressPatterns.test(line)) return false;
+        if (/https?:\/\/|www\./i.test(line)) return false;
         return companyPatterns.test(line);
     });
 
@@ -344,6 +394,10 @@ export function parseOcrTextToCardData(text) {
 
     if (nameCandidates.length > 0) {
         name = nameCandidates.find((candidate) => candidate.length >= 2 && candidate.length <= 5) || nameCandidates[0];
+    }
+
+    if (name && /(?:xai|cosmetics|korea|co|ltd|corp|company|official|clinic|instagram|whatsapp|www|http)/i.test(name)) {
+        name = '';
     }
 
     const normalized = {
@@ -379,7 +433,7 @@ export function refineParsedCardData(parsed, lines, block) {
     if (!cleaned.name) {
         const nameCandidates = lines.filter(line => {
             const trimmed = line.replace(/[•·\-\s]+/g, '');
-            return trimmed.length >= 2 && trimmed.length <= 12 && (/^[가-힣]{2,5}$/.test(trimmed) || /^[A-Za-z][A-Za-z\s.'-]{1,25}$/.test(trimmed)) && !/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(trimmed);
+            return trimmed.length >= 2 && trimmed.length <= 12 && (/^[가-힣]{2,5}$/.test(trimmed) || /^[A-Za-z][A-Za-z\s.'-]{1,25}$/.test(trimmed)) && !/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic|xai|cosmetics|korea|co\.|ltd|corp|company/i.test(trimmed);
         });
         cleaned.name = nameCandidates[0] || '';
     }
