@@ -98,7 +98,7 @@ export default function Uploader({
                 명함 이미지들을 끌어서 넣거나 클릭하세요
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                PNG, JPG, WEBP 지원 (한 번에 최대 50장)
+                PNG, JPG, WEBP 지원 · 단축키 (Ctrl+V) 붙여넣기 지원
               </p>
             </div>
           </div>

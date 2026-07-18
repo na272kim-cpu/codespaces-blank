@@ -97,6 +97,38 @@ export default function App() {
     };
   }, []);
 
+  // --- 글로벌 클립보드 이미지 붙여넣기 (Ctrl+V) 대응 리스너 ---
+  useEffect(() => {
+    const handlePaste = (e) => {
+      if (isProcessing) return;
+      const files = e.clipboardData?.files;
+      if (files && files.length > 0) {
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        if (imageFiles.length > 0) {
+          e.preventDefault();
+          
+          // 클립보드 붙여넣기 이미지의 깔끔하고 직관적인 한글 기본 파일명 부여
+          const namedFiles = imageFiles.map((file, idx) => {
+            const ext = file.type.split('/')[1] || 'png';
+            return new File(
+              [file], 
+              `클립보드_명함_${Date.now().toString().slice(-4)}_${idx + 1}.${ext}`, 
+              { type: file.type }
+            );
+          });
+
+          handleFilesSelected(namedFiles);
+          showToast(`📋 클립보드에서 ${namedFiles.length}개의 이미지를 성공적으로 붙여넣었습니다!`);
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [isProcessing, cardQueue]);
+
   // --- 토스트 알림 노출 트리거 ---
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
