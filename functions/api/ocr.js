@@ -41,6 +41,10 @@ export async function onRequestPost(context) {
         const promptText = `
             역할: 아주 지능적인 명함 스캐너 전문 엔진.
             임무: 첨부된 명함 이미지 속에 기재되어 있는 텍스트 정보를 완벽히 분석해서 정확한 형식의 JSON 정보로 추출하라.
+            핵심 규칙:
+            - 이미지에 실제로 보이는 텍스트만 사용하라. 불확실하면 추측하지 말고 빈 문자열 ""로 남겨라.
+            - 이름, 회사명, 직급, 메일, 전화번호, 주소, 웹사이트는 가능한 한 원문에 가깝게 정확히 기록하라.
+            - 한국어/영어 혼합 텍스트를 그대로 보존하라.
             
             스키마 규격:
             - name: 이름 (만약 없으면 빈 문자열 "")
@@ -155,8 +159,24 @@ export async function onRequestPost(context) {
             });
         }
 
-        // 성공적인 JSON 반환
-        return new Response(parsedText, { status: 200, headers });
+        const normalizedPayload = parsedText.trim();
+        let responseBody = normalizedPayload;
+
+        try {
+            JSON.parse(normalizedPayload);
+        } catch (error) {
+            const fencedMatch = normalizedPayload.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+            if (fencedMatch) {
+                responseBody = fencedMatch[1].trim();
+            } else {
+                const objectMatch = normalizedPayload.match(/\{[\s\S]*\}/);
+                if (objectMatch) {
+                    responseBody = objectMatch[0];
+                }
+            }
+        }
+
+        return new Response(responseBody, { status: 200, headers });
 
     } catch (error) {
         return new Response(JSON.stringify({ error: "INTERNAL_ERROR", message: error.message || "서버 내부 오류가 발생했습니다." }), {

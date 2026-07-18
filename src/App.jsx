@@ -3,7 +3,7 @@ import Tesseract from 'tesseract.js';
 import Header from './components/Header';
 import Uploader from './components/Uploader';
 import DataTable from './components/DataTable';
-import { parseOcrTextToCardData } from './utils/ocrUtils';
+import { parseGeminiResponse, parseOcrTextToCardData, preprocessImageDataUrl } from './utils/ocrUtils';
 
 export default function App() {
   // --- 테마 상태 ---
@@ -164,16 +164,31 @@ export default function App() {
       newCards.push(cardObj);
       addCount++;
 
-      // 비동기 Base64 프리로드
+      // 비동기 Base64 프리로드 및 OCR용 전처리
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setCardQueue((prev) =>
-          prev.map((c) =>
-            c.id === id
-              ? { ...c, imageUrl: e.target.result, base64: e.target.result.split(',')[1] }
-              : c
-          )
-        );
+      reader.onload = async (e) => {
+        try {
+          const originalDataUrl = e.target.result;
+          const processedDataUrl = await preprocessImageDataUrl(originalDataUrl, file.type);
+          const processedMimeType = processedDataUrl.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png';
+          const processedBase64 = processedDataUrl.split(',')[1] || '';
+
+          setCardQueue((prev) =>
+            prev.map((c) =>
+              c.id === id
+                ? { ...c, imageUrl: originalDataUrl, type: processedMimeType, base64: processedBase64 }
+                : c
+            )
+          );
+        } catch (error) {
+          setCardQueue((prev) =>
+            prev.map((c) =>
+              c.id === id
+                ? { ...c, imageUrl: e.target.result, base64: e.target.result.split(',')[1] }
+                : c
+            )
+          );
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -255,6 +270,10 @@ export default function App() {
       const promptText = `
         역할: 아주 지능적인 명함 스캐너 전문 엔진.
         임무: 첨부된 명함 이미지 속에 기재되어 있는 텍스트 정보를 완벽히 분석해서 정확한 형식의 JSON 정보로 추출하라.
+        핵심 규칙:
+        - 이미지에 실제로 보이는 텍스트만 사용하라. 불확실하면 추측하지 말고 빈 문자열 ""로 남겨라.
+        - 이름, 회사명, 직급, 메일, 전화번호, 주소, 웹사이트는 가능한 한 원문에 가깝게 정확히 기록하라.
+        - 한국어/영어 혼합 텍스트를 그대로 보존하라.
         
         스키마 규격:
         - name: 이름 (만약 없으면 빈 문자열 "")
@@ -343,35 +362,50 @@ export default function App() {
         throw new Error('API 응답 내부에 반환 텍스트가 부재합니다.');
       }
 
-      return JSON.parse(parsedText);
+      const normalized = parseGeminiResponse(parsedText);
+      if (!normalized) {
+        if (onProgress) {
+          onProgress('AI 응답 형식이 비정상적이어서 로컬 파서로 복구 중...');
+        }
+        throw new Error('Gemini 응답을 JSON으로 해석하지 못했습니다.');
+      }
+
+      return normalized;
     } else {
       // 2) 서버리스 에지 백엔드 프록시 호출 모드
       if (onProgress) {
         onProgress('보안 AI 서버 분석 중...');
       }
 
-      const response = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base64: base64Data, mimeType })
-      });
+      try {
+        const response = await fetch('/api/ocr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64: base64Data, mimeType })
+        });
 
-      if (!response.ok) {
-        const errRes = await response.json().catch(() => ({}));
-        throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
-      }
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      // 서버 키가 미지정되었거나 호출 한도가 소진된 경우, 에러 중단 없이 클라이언트 로컬 Tesseract.js로 즉각 복원 전환! (완벽한 폴백)
-      if (data.error === 'API_KEY_MISSING' || data.error === 'RATE_LIMITED') {
+        // 서버 키가 미지정되었거나 호출 한도가 소진된 경우, 에러 중단 없이 클라이언트 로컬 Tesseract.js로 즉각 복원 전환! (완벽한 폴백)
+        if (data.error === 'API_KEY_MISSING' || data.error === 'RATE_LIMITED') {
+          if (onProgress) {
+            onProgress('로컬 엔진 전환 분석 중...');
+          }
+          return processCardOCRLocal(base64Data, mimeType, onProgress);
+        }
+
+        return data;
+      } catch (error) {
         if (onProgress) {
-          onProgress('로컬 엔진 전환 분석 중...');
+          onProgress('서버 분석 실패, 로컬 OCR로 복구 중...');
         }
         return processCardOCRLocal(base64Data, mimeType, onProgress);
       }
-
-      return data;
     }
   };
 
