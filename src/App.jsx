@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
 import Header from './components/Header';
 import Uploader from './components/Uploader';
@@ -20,6 +20,12 @@ export default function App() {
   const [cardQueue, setCardQueue] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sheetData, setSheetData] = useState([]);
+
+  // 최신 대기열 추적용 Ref (비동기 이미지 로딩 시 Stale Closure 방어)
+  const cardQueueRef = useRef(cardQueue);
+  useEffect(() => {
+    cardQueueRef.current = cardQueue;
+  }, [cardQueue]);
 
   // --- 진행율 상태 ---
   const [progressPercent, setProgressPercent] = useState(0);
@@ -379,20 +385,19 @@ export default function App() {
     for (const card of pendingCards) {
       setCardQueue((prev) => prev.map((c) => (c.id === card.id ? { ...c, status: 'processing' } : c)));
 
+      // Ref로부터 항상 실시간 최신 카드 정보를 확보하여 이미지 유실 방지
+      let currentCard = cardQueueRef.current.find((c) => c.id === card.id) || card;
+
       // Base64 로딩 지연 대응
-      let currentCard = card;
       if (!currentCard.base64) {
         await new Promise((resolve) => {
           const checkBase = setInterval(() => {
-            setCardQueue((prev) => {
-              const matched = prev.find((c) => c.id === card.id);
-              if (matched && matched.base64) {
-                clearInterval(checkBase);
-                currentCard = matched;
-                resolve();
-              }
-              return prev;
-            });
+            const latest = cardQueueRef.current.find((c) => c.id === card.id);
+            if (latest && latest.base64) {
+              clearInterval(checkBase);
+              currentCard = latest;
+              resolve();
+            }
           }, 100);
         });
       }
