@@ -78,4 +78,32 @@ test('parses XAI sample output correctly without mislabeling noise', () => {
   assert.equal(result.country, '대한민국');
   assert.equal(result.address, '151 Gukhoe-daero, Gangseo-gu, Seoul, Korea. 07787, 76-60 Bukhang-ro, Seo-gu, Incheon, Korea 22853');
   assert.equal(result.website, 'https://www.xai.co.kr');
+  assert.equal(result.notes, 'Whatsapp: +82 10 9102 5847, Instagram: @3wclinic.official');
+});
+
+test('captures handwritten memo lines into notes', () => {
+  const text = [
+    '회사명: XAI korea / XAI COSMETICS KOREA Co., Ltd.',
+    'xaicom@nate.com',
+    'Whatsapp: +82 10 9102 5847',
+    '2. 수기 메모 정보',
+    '미팅 시간은 오후 3시입니다.',
+    '다음 주 월요일 재확인 필요'
+  ].join('\n');
+  const result = parseOcrTextToCardData(text);
+
+  assert.equal(result.notes, '미팅 시간은 오후 3시입니다., 다음 주 월요일 재확인 필요');
+});
+
+test('includes SNS lines in notes when present', () => {
+  const text = [
+    '회사명: XAI korea / XAI COSMETICS KOREA Co., Ltd.',
+    'Instagram: @xai.official',
+    'Facebook: XAI Korea',
+    'WeChat: xai_korea',
+    'www.xai.co.kr'
+  ].join('\n');
+  const result = parseOcrTextToCardData(text);
+
+  assert.equal(result.notes, 'Instagram: @xai.official, Facebook: XAI Korea, WeChat: xai_korea');
 });

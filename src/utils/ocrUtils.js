@@ -413,6 +413,63 @@ export function parseOcrTextToCardData(text) {
         notes: ''
     };
 
+    const noteOnlyLabels = /^\d+\.\s*(수기\s*메모|손글씨|메모|note|notes|memo|비고)\s*$/i;
+    const noteHeaderOnly = /^(?:\d+\.\s*)?(?:수기\s*메모|손글씨|메모|note|notes|memo|비고)(?:\s*정보|\s*info)?\s*$/i;
+    const noteSectionPattern = /^(?:\d+\.\s*)?(?:수기\s*메모|손글씨|메모|note|notes|memo|비고)(?:\s*[:\-]|\s*)(.*)$/i;
+    const socialNotePatterns = /instagram|facebook|wechat|line|twitter|tiktok|blog|sns|whatsapp|linkedin/i;
+
+    const handwrittenNotes = [];
+    const noteSectionIndex = lines.findIndex((line) => noteSectionPattern.test(line));
+    if (noteSectionIndex !== -1) {
+        for (let i = noteSectionIndex; i < lines.length; i += 1) {
+            const currentLine = lines[i].trim();
+            if (!currentLine) continue;
+
+                    if (i === noteSectionIndex) {
+                const match = currentLine.match(noteSectionPattern);
+                const remainder = match?.[1]?.trim() || '';
+                if (remainder && !noteOnlyLabels.test(currentLine) && !noteHeaderOnly.test(currentLine)) {
+                    handwrittenNotes.push(remainder);
+                }
+                continue;
+            }
+
+            if (noteOnlyLabels.test(currentLine)) {
+                continue;
+            }
+
+            if (/^(?:회사명|Company Name|Brand Name|www\.|https?:\/\/|Email|E-mail|이메일|Whatsapp|Instagram|Tel|전화|주소|Address|Phone)\b/i.test(currentLine)) {
+                break;
+            }
+
+            handwrittenNotes.push(currentLine);
+        }
+    }
+
+    const normalizedPhoneDigits = normalizedPhones.map((phone) => phone.replace(/\D/g, ''));
+    const socialNotes = lines.filter((line, index) => {
+        const normalizedLine = line.trim();
+        if (!normalizedLine) return false;
+        if (noteSectionIndex !== -1 && index >= noteSectionIndex) return false;
+        if (noteOnlyLabels.test(normalizedLine)) return false;
+        if (email && normalizedLine.includes(email)) return false;
+        if (website && normalizedLine.includes(website)) return false;
+        const lineDigits = normalizedLine.replace(/\D/g, '');
+        if (normalizedPhoneDigits.some((phoneDigits) => phoneDigits && lineDigits.includes(phoneDigits))) {
+            return false;
+        }
+        if (/^(?:회사명|Company Name|Brand Name|www\.|https?:\/\/|Email|E-mail|이메일|Tel|전화|주소|Address|Phone)\b/i.test(normalizedLine)) {
+            return false;
+        }
+        return socialNotePatterns.test(normalizedLine);
+    }).map(line => line.replace(/^[•·\-\s:,]+|[•·\-\s:,]+$/g, '').trim());
+
+    const noteLines = handwrittenNotes.length > 0 ? handwrittenNotes : socialNotes;
+    normalized.notes = noteLines
+        .map(line => line.replace(/^[•·\-\s:,]+|[•·\-\s:,]+$/g, '').trim())
+        .filter(Boolean)
+        .join(', ');
+
     return refineParsedCardData(normalized, lines, block);
 }
 
