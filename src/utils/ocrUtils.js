@@ -32,8 +32,26 @@ export function parseOcrTextToCardData(text) {
     const lowerBlock = block.toLowerCase();
     if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
         country = '일본';
+    } else if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || lowerBlock.includes('hk')) {
+        country = '홍콩';
     } else if (lowerBlock.includes('china') || lowerBlock.includes('중국') || lowerBlock.includes('beijing') || lowerBlock.includes('北京')) {
         country = '중국';
+    } else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || lowerBlock.includes('uk') || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('london')) {
+        country = '영국';
+    } else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || lowerBlock.includes('sg')) {
+        country = '싱가포르';
+    } else if (lowerBlock.includes('germany') || lowerBlock.includes('독일') || lowerBlock.includes('berlin') || lowerBlock.includes('deutschland')) {
+        country = '독일';
+    } else if (lowerBlock.includes('france') || lowerBlock.includes('프랑스') || lowerBlock.includes('paris')) {
+        country = '프랑스';
+    } else if (lowerBlock.includes('canada') || lowerBlock.includes('캐나다') || lowerBlock.includes('toronto') || lowerBlock.includes('vancouver')) {
+        country = '캐나다';
+    } else if (lowerBlock.includes('australia') || lowerBlock.includes('호주') || lowerBlock.includes('sydney')) {
+        country = '호주';
+    } else if (lowerBlock.includes('taiwan') || lowerBlock.includes('대만') || lowerBlock.includes('taipei') || lowerBlock.includes('台灣')) {
+        country = '대만';
+    } else if (lowerBlock.includes('vietnam') || lowerBlock.includes('베트남') || lowerBlock.includes('hanoi') || lowerBlock.includes('ho chi minh')) {
+        country = '베트남';
     } else if (lowerBlock.includes('usa') || lowerBlock.includes('america') || lowerBlock.includes('united states') || lowerBlock.includes('미국')) {
         country = '미국';
     }
