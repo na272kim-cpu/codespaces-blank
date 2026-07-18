@@ -246,6 +246,13 @@ export default function App() {
       return;
     }
 
+    // 3개 이상 등록 시 프리미엄 제한 작동
+    if (cardQueue.length >= 3) {
+      setShowPremiumModal(true);
+      showToast('3개 이상의 명함 일괄 분석은 프리미엄 요금제 전용 기능입니다.', 'error');
+      return;
+    }
+
     setIsProcessing(true);
     showToast(`총 ${pendingCards.length}개의 명함 일괄 분석을 가동합니다.`);
 
@@ -416,6 +423,7 @@ export default function App() {
               onStartBatch={handleStartBatch}
               onClearQueue={handleClearQueue}
               onRemoveItem={handleRemoveQueueItem}
+              onShowPremium={() => setShowPremiumModal(true)}
             />
           </div>
 
