@@ -37,7 +37,7 @@ export function parseOcrTextToCardData(text) {
     if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || lowerBlock.includes('hk') || lowerBlock.includes('852')) {
         country = '홍콩';
     } 
-    // 2순위: 영국 (영국 국번 44 및 키워드 감지)
+    // 2. 영국 (영국 국번 44 및 키워드 감지)
     else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || lowerBlock.includes('uk') || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('44')) {
         country = '영국';
     } 
@@ -45,6 +45,10 @@ export function parseOcrTextToCardData(text) {
     else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || lowerBlock.includes('sg') || lowerBlock.includes('65')) {
         country = '싱가포르';
     } 
+    // 아랍에미리트 (UAE 국번 971 및 키워드 감지)
+    else if (lowerBlock.includes('united arab emirates') || lowerBlock.includes('uae') || lowerBlock.includes('dubai') || lowerBlock.includes('abudhabi') || lowerBlock.includes('아랍에미리트') || lowerBlock.includes('두바이') || lowerBlock.includes('아부다비') || lowerBlock.includes('971')) {
+        country = '아랍에미리트';
+    }
     // 기타 주요 아시아 거점
     else if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
         country = '일본';
