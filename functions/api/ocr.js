@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
         };
 
         // 2. OPTIONS 사전 요청(Preflight) 처리
@@ -15,11 +15,14 @@ export async function onRequestPost(context) {
             return new Response(null, { status: 204, headers });
         }
 
-        // 3. 환경 변수에서 다양한 후보 이름으로 API 키 획득 (대소문자 오타나 커스텀 네이밍 적극 대응)
-        const apiKey = env.GEMINI_API_KEY || env.geminiApiKey || env.GEMINI_KEY || env.API_KEY || env.googleGeminiApiKey || "";
-        if (!apiKey) {
+        // 3. 환경 변수에서 OpenAI 및 Gemini API 키 획득 (대소문자 오타나 커스텀 네이밍 적극 대응)
+        const openAiApiKey = env.OPENAI_API_KEY || env.openaiApiKey || env.OPENAI_KEY || "";
+        const geminiApiKey = env.GEMINI_API_KEY || env.geminiApiKey || env.GEMINI_KEY || env.API_KEY || env.googleGeminiApiKey || "";
+
+        // 두 열쇠 모두 없을 시 로컬 Tesseract 모드용 폴백 신호 반환
+        if (!openAiApiKey && !geminiApiKey) {
             return new Response(JSON.stringify({ error: "API_KEY_MISSING", message: "서버에 설정된 API 키가 없습니다. 로컬 OCR 모드로 진행합니다." }), {
-                status: 200, // 폴백 전환이 원활하도록 상태는 200으로 전송해 에러를 안전하게 통제합니다.
+                status: 200,
                 headers
             });
         }
@@ -35,9 +38,7 @@ export async function onRequestPost(context) {
             });
         }
 
-        // 5. 구글 Gemini API 엔드포인트 및 멀티 모델 폴백 체인 설정
-        const models = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"];
-
+        // 5. 비즈니스 코어 프롬프트 지시어
         const promptText = `
             역할: 아주 지능적인 명함 스캐너 전문 엔진.
             임무: 첨부된 명함 이미지 속에 기재되어 있는 텍스트 정보를 완벽히 분석해서 정확한 형식의 JSON 정보로 추출하라.
@@ -59,105 +60,190 @@ export async function onRequestPost(context) {
               3) 손글씨가 없거나 도저히 판독할 수 없는 경우, 영어명, 소셜 링크, 슬로건 등 다른 특이사항을 기재하거나 그것도 없다면 빈 문자열 ""을 반환할 것.
         `;
 
-        const geminiPayload = {
-            contents: [{
-                parts: [
-                    { text: promptText },
-                    { 
-                        inlineData: { 
-                            mimeType: mimeType, 
-                            data: base64 
-                        } 
+        // =========================================================================
+        // [루트 A] OpenAI API 키가 있을 경우 (최우선 순위 - GPT-4o-mini 비전 가동)
+        // =========================================================================
+        if (openAiApiKey) {
+            const endpointUrl = "https://api.openai.com/v1/chat/completions";
+            const openaiPayload = {
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: promptText
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:${mimeType};base64,${base64}`
+                                }
+                            }
+                        ]
                     }
-                ]
-            }],
-            generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        name: { type: "STRING" },
-                        company: { type: "STRING" },
-                        role: { type: "STRING" },
-                        email: { type: "STRING" },
-                        phone: { type: "STRING" },
-                        phone2: { type: "STRING" },
-                        country: { type: "STRING" },
-                        address: { type: "STRING" },
-                        website: { type: "STRING" },
-                        notes: { type: "STRING" }
-                    },
-                    required: ["name", "company", "role", "email", "phone", "phone2", "country", "address", "website", "notes"]
+                ],
+                // Structured Outputs를 명시하여 오차 없는 데이터 반환률 보장 (엄격 스키마)
+                response_format: {
+                    type: "json_schema",
+                    json_schema: {
+                        name: "business_card_data",
+                        strict: true,
+                        schema: {
+                            type: "object",
+                            properties: {
+                                name: { type: "string" },
+                                company: { type: "string" },
+                                role: { type: "string" },
+                                email: { type: "string" },
+                                phone: { type: "string" },
+                                phone2: { type: "string" },
+                                country: { type: "string" },
+                                address: { type: "string" },
+                                website: { type: "string" },
+                                notes: { type: "string" }
+                            },
+                            required: ["name", "company", "role", "email", "phone", "phone2", "country", "address", "website", "notes"],
+                            additionalProperties: false
+                        }
+                    }
                 }
-            }
-        };
+            };
 
-        // 6. Gemini API 호출 (성공할 때까지 모델 순차 폴백 진행)
-        let response = null;
-        let lastStatus = 0;
-        let lastErrorText = "";
+            const response = await fetch(endpointUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${openAiApiKey}`
+                },
+                body: JSON.stringify(openaiPayload)
+            });
 
-        for (const model of models) {
-            const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            try {
-                const res = await fetch(endpointUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(geminiPayload)
+            if (!response.ok) {
+                const errText = await response.text();
+                return new Response(JSON.stringify({ error: "OPENAI_API_ERROR", message: `OpenAI API 오류 발생: ${response.status}`, details: errText }), {
+                    status: response.status,
+                    headers
                 });
-
-                if (res.status === 404) {
-                    lastStatus = 404;
-                    lastErrorText = `모델 ${model} 지원 불가 (404 Not Found)`;
-                    continue; // 다음 모델 시도
-                }
-
-                response = res;
-                break; // 404가 아니면 루프 탈출 (성공 혹은 타 오류)
-            } catch (err) {
-                lastStatus = 500;
-                lastErrorText = err.message || "네트워크 에러";
             }
+
+            const data = await response.json();
+            const parsedText = data.choices?.[0]?.message?.content;
+            if (!parsedText) {
+                return new Response(JSON.stringify({ error: "EMPTY_RESPONSE", message: "OpenAI 응답 내부에 반환 텍스트가 부재합니다." }), {
+                    status: 500,
+                    headers
+                });
+            }
+
+            // 성공적인 JSON 반환
+            return new Response(parsedText, { status: 200, headers });
         }
 
-        if (!response) {
-            return new Response(JSON.stringify({ 
-                error: "GEMINI_API_ERROR", 
-                message: `Gemini API 호출 전체 실패 (모든 모델 비활성): ${lastStatus}`, 
-                details: lastErrorText 
-            }), {
-                status: lastStatus || 500,
-                headers
-            });
-        }
+        // =========================================================================
+        // [루트 B] OpenAI 키는 없고 Gemini API 키가 있을 경우 (차선 순위 - Gemini 가동)
+        // =========================================================================
+        if (geminiApiKey) {
+            const models = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-1.5-flash"];
+            const geminiPayload = {
+                contents: [{
+                    parts: [
+                        { text: promptText },
+                        { 
+                            inlineData: { 
+                                mimeType: mimeType, 
+                                data: base64 
+                            } 
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            name: { type: "STRING" },
+                            company: { type: "STRING" },
+                            role: { type: "STRING" },
+                            email: { type: "STRING" },
+                            phone: { type: "STRING" },
+                            phone2: { type: "STRING" },
+                            country: { type: "STRING" },
+                            address: { type: "STRING" },
+                            website: { type: "STRING" },
+                            notes: { type: "STRING" }
+                        },
+                        required: ["name", "company", "role", "email", "phone", "phone2", "country", "address", "website", "notes"]
+                    }
+                }
+            };
 
-        // 분당 구글 과부하 한도 초과(429) 등의 차단 에러 핸들링
-        if (response.status === 429) {
-            return new Response(JSON.stringify({ error: "RATE_LIMITED", message: "API 요청 한도가 일시적으로 초과되었습니다. 로컬 모드로 자동 전환합니다." }), {
-                status: 200, // 역시 로컬 모드로의 매끄러운 폴백을 위해 200으로 수용합니다.
-                headers
-            });
-        }
+            let response = null;
+            let lastStatus = 0;
+            let lastErrorText = "";
 
-        if (!response.ok) {
-            const errText = await response.text();
-            return new Response(JSON.stringify({ error: "GEMINI_API_ERROR", message: `Gemini API 오류 발생: ${response.status}`, details: errText }), {
-                status: response.status,
-                headers
-            });
-        }
+            for (const model of models) {
+                const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+                try {
+                    const res = await fetch(endpointUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(geminiPayload)
+                    });
 
-        const data = await response.json();
-        const parsedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!parsedText) {
-            return new Response(JSON.stringify({ error: "EMPTY_RESPONSE", message: "API 응답 내부에 반환 텍스트가 부재합니다." }), {
-                status: 500,
-                headers
-            });
-        }
+                    if (res.status === 404) {
+                        lastStatus = 404;
+                        lastErrorText = `모델 ${model} 지원 불가 (404 Not Found)`;
+                        continue;
+                    }
 
-        // 성공적인 JSON 반환
-        return new Response(parsedText, { status: 200, headers });
+                    response = res;
+                    break;
+                } catch (err) {
+                    lastStatus = 500;
+                    lastErrorText = err.message || "네트워크 에러";
+                }
+            }
+
+            if (!response) {
+                return new Response(JSON.stringify({ 
+                    error: "GEMINI_API_ERROR", 
+                    message: `Gemini API 호출 전체 실패 (모든 모델 비활성): ${lastStatus}`, 
+                    details: lastErrorText 
+                }), {
+                    status: lastStatus || 500,
+                    headers
+                });
+            }
+
+            if (response.status === 429) {
+                return new Response(JSON.stringify({ error: "RATE_LIMITED", message: "API 요청 한도가 일시적으로 초과되었습니다. 로컬 모드로 자동 전환합니다." }), {
+                    status: 200,
+                    headers
+                });
+            }
+
+            if (!response.ok) {
+                const errText = await response.text();
+                return new Response(JSON.stringify({ error: "GEMINI_API_ERROR", message: `Gemini API 오류 발생: ${response.status}`, details: errText }), {
+                    status: response.status,
+                    headers
+                });
+            }
+
+            const data = await response.json();
+            const parsedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!parsedText) {
+                return new Response(JSON.stringify({ error: "EMPTY_RESPONSE", message: "Gemini API 응답 내부에 반환 텍스트가 부재합니다." }), {
+                    status: 500,
+                    headers
+                });
+            }
+
+            // 성공적인 JSON 반환
+            return new Response(parsedText, { status: 200, headers });
+        }
 
     } catch (error) {
         return new Response(JSON.stringify({ error: "INTERNAL_ERROR", message: error.message || "서버 내부 오류가 발생했습니다." }), {
@@ -169,4 +255,3 @@ export async function onRequestPost(context) {
         });
     }
 }
-

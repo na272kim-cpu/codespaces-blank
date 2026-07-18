@@ -15,6 +15,7 @@ export default function App() {
 
   // --- API Key 및 클라이언트 구동 상태 ---
   const [apiKey, setApiKey] = useState('');
+  const [apiType, setApiType] = useState(''); // 'openai' | 'gemini'
 
   // --- 비즈니스 상태 ---
   const [cardQueue, setCardQueue] = useState([]);
@@ -71,18 +72,33 @@ export default function App() {
   // --- API Key 자동 탐색 및 주입 ---
   useEffect(() => {
     const candidates = [
+      window.__openaiApiKey,
+      window.OPENAI_API_KEY,
+      window.openaiApiKey,
       window.__geminiApiKey,
       window.GEMINI_API_KEY,
       window.geminiApiKey,
+      localStorage.getItem('openaiApiKey'),
       localStorage.getItem('geminiApiKey'),
-      localStorage.getItem('googleGeminiApiKey'),
+      localStorage.getItem('apiKey'),
+      new URLSearchParams(window.location.search).get('openaiApiKey'),
       new URLSearchParams(window.location.search).get('geminiApiKey'),
       new URLSearchParams(window.location.search).get('apiKey')
     ];
 
     for (const value of candidates) {
       if (typeof value === 'string' && value.trim()) {
-        setApiKey(value.trim());
+        const trimmed = value.trim();
+        setApiKey(trimmed);
+        
+        // 키 종류 자동 감별 (OpenAI는 sk-로 시작하고, Gemini는 AIzaSy로 시작함)
+        if (trimmed.startsWith('sk-')) {
+          setApiType('openai');
+        } else if (trimmed.startsWith('AIzaSy')) {
+          setApiType('gemini');
+        } else {
+          setApiType('gemini'); // 그 외 기본값은 gemini로 설정
+        }
         break;
       }
     }
@@ -252,11 +268,6 @@ export default function App() {
   const processCardOCR = async (base64Data, mimeType, onProgress) => {
     // 1) 클라이언트 사이드 API Key 직접 주입 모드
     if (apiKey) {
-      if (onProgress) {
-        onProgress('Gemini AI 직접 분석 중...');
-      }
-
-      const models = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-1.5-flash'];
       const promptText = `
         역할: 아주 지능적인 명함 스캐너 전문 엔진.
         임무: 첨부된 명함 이미지 속에 기재되어 있는 텍스트 정보를 완벽히 분석해서 정확한 형식의 JSON 정보로 추출하라.
@@ -278,6 +289,87 @@ export default function App() {
           3) 손글씨가 없거나 도저히 판독할 수 없는 경우, 영어명, 소셜 링크, 슬로건 등 다른 특이사항을 기재하거나 그것도 없다면 빈 문자열 ""을 반환할 것.
       `;
 
+      // =========================================================================
+      // [직접 가동 루트 A] OpenAI 직접 호출 구동
+      // =========================================================================
+      if (apiType === 'openai') {
+        if (onProgress) {
+          onProgress('OpenAI GPT-4o 직접 분석 중...');
+        }
+
+        const endpointUrl = "https://api.openai.com/v1/chat/completions";
+        const openaiPayload = {
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: promptText
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Data}`
+                  }
+                }
+              ]
+            }
+          ],
+          // Structured Outputs를 명시하여 오차 없는 데이터 반환률 보장 (엄격 스키마)
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "business_card_data",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  company: { type: "string" },
+                  role: { type: "string" },
+                  email: { type: "string" },
+                  phone: { type: "string" },
+                  phone2: { type: "string" },
+                  country: { type: "string" },
+                  address: { type: "string" },
+                  website: { type: "string" },
+                  notes: { type: "string" }
+                },
+                required: ["name", "company", "role", "email", "phone", "phone2", "country", "address", "website", "notes"],
+                additionalProperties: false
+              }
+            }
+          }
+        };
+
+        const response = await fetchWithRetry(endpointUrl, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(openaiPayload)
+        });
+
+        const data = await response.json();
+        const parsedText = data.choices?.[0]?.message?.content;
+        if (!parsedText) {
+          throw new Error('OpenAI 응답 내부에 반환 텍스트가 부재합니다.');
+        }
+
+        return JSON.parse(parsedText);
+      }
+
+      // =========================================================================
+      // [직접 가동 루트 B] Gemini 직접 호출 구동
+      // =========================================================================
+      if (onProgress) {
+        onProgress('Gemini AI 직접 분석 중...');
+      }
+
+      const models = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-1.5-flash'];
       const payload = {
         contents: [
           {
@@ -503,7 +595,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col transition-colors duration-300 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
       
       {/* 1. 상단 네비게이션 바 */}
-      <Header theme={theme} toggleTheme={toggleTheme} apiKey={apiKey} />
+      <Header theme={theme} toggleTheme={toggleTheme} apiKey={apiKey} apiType={apiType} />
 
       {/* 2. 에러 및 공지용 상태 배너 */}
       {banner.show && (
