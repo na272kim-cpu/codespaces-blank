@@ -15,8 +15,8 @@ export async function onRequestPost(context) {
             return new Response(null, { status: 204, headers });
         }
 
-        // 3. 환경 변수에서 API 키 획득 (Cloudflare Pages 대시보드에 설정된 GEMINI_API_KEY)
-        const apiKey = env.GEMINI_API_KEY || "";
+        // 3. 환경 변수에서 다양한 후보 이름으로 API 키 획득 (대소문자 오타나 커스텀 네이밍 적극 대응)
+        const apiKey = env.GEMINI_API_KEY || env.geminiApiKey || env.GEMINI_KEY || env.API_KEY || env.googleGeminiApiKey || "";
         if (!apiKey) {
             return new Response(JSON.stringify({ error: "API_KEY_MISSING", message: "서버에 설정된 API 키가 없습니다. 로컬 OCR 모드로 진행합니다." }), {
                 status: 200, // 폴백 전환이 원활하도록 상태는 200으로 전송해 에러를 안전하게 통제합니다.
