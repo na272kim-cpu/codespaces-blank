@@ -29,24 +29,28 @@ export function parseOcrTextToCardData(text) {
     // 3. 웹사이트 추출
     const website = block.match(/https?:\/\/[^\s]+|www\.[^\s]+/i)?.[0] || '';
 
-    // 4. 국가 판별 (우선순위: 국번/국가번호 감지 및 정교한 단어 경계 매칭)
+    // 4. 국가 판별 (우선순위: 선제적 한국 판정 및 국번/국가번호의 정교한 단어 경계 매칭)
     let country = '알수없음';
     const lowerBlock = block.toLowerCase();
     
-    // 1순위: 홍콩 (홍콩 국번 852 및 키워드 감지)
-    if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || lowerBlock.includes('hk') || lowerBlock.includes('852')) {
+    // 0순위: 대한민국 (KOREA, 한국, 서울, +82, co.kr 등 한국 지표 감지 시 최우선 선제적 확정)
+    if (lowerBlock.includes('korea') || lowerBlock.includes('한국') || lowerBlock.includes('대한민국') || lowerBlock.includes('seoul') || lowerBlock.includes('서울') || lowerBlock.includes('+82') || lowerBlock.includes('co.kr') || lowerBlock.includes('.kr') || lowerBlock.includes('cokr')) {
+        country = '대한민국';
+    }
+    // 1순위: 홍콩 (홍콩 국번 +852, (852) 및 단독 키워드 감지)
+    else if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || /\bhk\b/.test(lowerBlock) || lowerBlock.includes('+852') || lowerBlock.includes('(852)')) {
         country = '홍콩';
     } 
-    // 2. 영국 (영국 국번 44 및 키워드 감지)
-    else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || lowerBlock.includes('uk') || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('44')) {
+    // 2순위: 영국 (영국 국번 +44, (44) 및 단독 키워드 감지)
+    else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || /\buk\b/.test(lowerBlock) || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('+44') || lowerBlock.includes('(44)')) {
         country = '영국';
     } 
-    // 3순위: 싱가포르 (싱가포르 국번 65 및 키워드 감지)
-    else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || lowerBlock.includes('sg') || lowerBlock.includes('65')) {
+    // 3순위: 싱가포르 (싱가포르 국번 +65, (65) 및 단독 키워드 감지)
+    else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || /\bsg\b/.test(lowerBlock) || lowerBlock.includes('+65') || lowerBlock.includes('(65)')) {
         country = '싱가포르';
     } 
-    // 아랍에미리트 (UAE 국번 971 및 키워드 감지)
-    else if (lowerBlock.includes('united arab emirates') || lowerBlock.includes('uae') || lowerBlock.includes('dubai') || lowerBlock.includes('abudhabi') || lowerBlock.includes('아랍에미리트') || lowerBlock.includes('두바이') || lowerBlock.includes('아부다비') || lowerBlock.includes('971')) {
+    // 아랍에미리트 (UAE 국번 +971, (971) 및 단독 키워드 감지)
+    else if (lowerBlock.includes('united arab emirates') || lowerBlock.includes('uae') || lowerBlock.includes('dubai') || lowerBlock.includes('abudhabi') || lowerBlock.includes('아랍에미리트') || lowerBlock.includes('두바이') || lowerBlock.includes('아부다비') || lowerBlock.includes('+971') || lowerBlock.includes('(971)')) {
         country = '아랍에미리트';
     }
     // 기타 주요 아시아 거점
