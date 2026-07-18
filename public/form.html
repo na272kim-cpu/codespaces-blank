@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0014S970DN"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-0014S970DN');
+    </script>
+    <!-- MS Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "xlutufwxf9");
+    </script>
+    <!-- Google AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-2317415636524857">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2317415636524857"
+         crossorigin="anonymous"></script>
+    <title>문의하기 - Formspree 연동 폼</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-6 transition-colors duration-300">
+
+    <div class="max-w-md w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 shadow-xl transition-all duration-300">
+        
+        <!-- 뒤로가기 버튼 -->
+        <div class="mb-6">
+            <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-all">
+                <i class="fa-solid fa-arrow-left-long"></i> 메인 화면으로 돌아가기
+            </a>
+        </div>
+
+        <!-- 헤더 및 아이콘 -->
+        <div class="text-center mb-6 sm:mb-8">
+            <div class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center shadow-md mb-4">
+                <i class="fa-regular fa-paper-plane text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">문의하기</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">문의사항을 남겨주시면 빠르게 확인 후 답변 드리겠습니다.</p>
+        </div>
+
+        <!-- Formspree 폼 양식 -->
+        <form action="https://formspree.io/f/xrengklv" method="POST" class="space-y-5">
+            <!-- 제출 후 리다이렉트할 경로 (Formspree 지원) -->
+            <input type="hidden" name="_next" id="nextUrl">
+            <!-- 이름 필드 -->
+            <div>
+                <label for="name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">이름</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500">
+                        <i class="fa-regular fa-user text-sm"></i>
+                    </span>
+                    <input type="text" name="name" id="name" required placeholder="홍길동" 
+                        class="block w-full pl-10 pr-3.5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all dark:text-white placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- 이메일 필드 -->
+            <div>
+                <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">이메일 주소</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500">
+                        <i class="fa-regular fa-envelope text-sm"></i>
+                    </span>
+                    <input type="email" name="_replyto" id="email" required placeholder="example@email.com" 
+                        class="block w-full pl-10 pr-3.5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all dark:text-white placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- 연락처 필드 (옵션) -->
+            <div>
+                <label for="phone" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">연락처 <span class="text-slate-400 font-normal">(선택)</span></label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 dark:text-slate-500">
+                        <i class="fa-solid fa-phone text-sm"></i>
+                    </span>
+                    <input type="tel" name="phone" id="phone" placeholder="010-1234-5678" 
+                        class="block w-full pl-10 pr-3.5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all dark:text-white placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- 메시지 필드 -->
+            <div>
+                <label for="message" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">문의 내용</label>
+                <div class="relative">
+                    <textarea name="message" id="message" rows="4" required placeholder="문의하실 내용을 입력해 주세요..." 
+                        class="block w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all dark:text-white placeholder-slate-400 resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- 스팸 방지용 허니팟 필드 (사용자에게는 안 보임) -->
+            <input type="text" name="_gotcha" style="display:none">
+
+            <!-- 제출 버튼 -->
+            <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 group">
+                보내기 <i class="fa-solid fa-chevron-right text-xs group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </form>
+
+        <!-- 푸터 안내 -->
+        <div class="mt-6 text-center text-[10px] text-slate-400 dark:text-slate-500 flex justify-center items-center gap-1.5">
+            <i class="fa-solid fa-lock text-[8px]"></i> Formspree 보안 전송 방식 적용
+        </div>
+
+    </div>
+
+    <script>
+        // Formspree 전송 성공 시 메인 화면(index.html)으로 돌아가도록 리다이렉트 경로 설정
+        document.getElementById('nextUrl').value = window.location.origin + '/index.html';
+    </script>
+
+</body>
+</html>
