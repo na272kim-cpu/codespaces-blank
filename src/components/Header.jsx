@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Header({ theme, toggleTheme, apiKey }) {
+export default function Header({ theme, toggleTheme }) {
   return (
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -19,16 +19,6 @@ export default function Header({ theme, toggleTheme, apiKey }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* API 상태 표시등 (로컬 브라우저 세팅 시 노출) */}
-          {apiKey && (
-            <div id="apiStatusBadge" className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                Gemini AI 직접 활성화됨
-              </span>
-            </div>
-          )}
-
           {/* 테마 스위처 */}
           <button
             onClick={toggleTheme}

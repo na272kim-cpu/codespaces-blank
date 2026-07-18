@@ -13,9 +13,6 @@ export default function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
-  // --- API Key 및 클라이언트 구동 상태 ---
-  const [apiKey, setApiKey] = useState('');
-
   // --- 비즈니스 상태 ---
   const [cardQueue, setCardQueue] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -67,26 +64,6 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [banner.show, banner.type]);
-
-  // --- API Key 자동 탐색 및 주입 ---
-  useEffect(() => {
-    const candidates = [
-      window.__geminiApiKey,
-      window.GEMINI_API_KEY,
-      window.geminiApiKey,
-      localStorage.getItem('geminiApiKey'),
-      localStorage.getItem('googleGeminiApiKey'),
-      new URLSearchParams(window.location.search).get('geminiApiKey'),
-      new URLSearchParams(window.location.search).get('apiKey')
-    ];
-
-    for (const value of candidates) {
-      if (typeof value === 'string' && value.trim()) {
-        setApiKey(value.trim());
-        break;
-      }
-    }
-  }, []);
 
   // --- 글로벌 에러 전면 대응 리스너 ---
   useEffect(() => {
@@ -265,147 +242,38 @@ export default function App() {
 
   // --- 단건 명함 OCR 처리 분기 허브 ---
   const processCardOCR = async (base64Data, mimeType, onProgress) => {
-    // 1) 클라이언트 사이드 API Key 직접 주입 모드
-    if (apiKey) {
-      const promptText = `
-        역할: 아주 지능적인 명함 스캐너 전문 엔진.
-        임무: 첨부된 명함 이미지 속에 기재되어 있는 텍스트 정보를 완벽히 분석해서 정확한 형식의 JSON 정보로 추출하라.
-        핵심 규칙:
-        - 이미지에 실제로 보이는 텍스트만 사용하라. 불확실하면 추측하지 말고 빈 문자열 ""로 남겨라.
-        - 이름, 회사명, 직급, 메일, 전화번호, 주소, 웹사이트는 가능한 한 원문에 가깝게 정확히 기록하라.
-        - 한국어/영어 혼합 텍스트를 그대로 보존하라.
-        
-        스키마 규격:
-        - name: 이름 (만약 없으면 빈 문자열 "")
-        - company: 회사명 혹은 로고 이름 (만약 없으면 빈 문자열 "")
-        - role: 직급, 직책 또는 소속 부서 (만약 없으면 빈 문자열 "")
-        - email: 대표 이메일 주소 (만약 없으면 빈 문자열 "")
-        - phone: 첫 번째 연락처 (휴대폰 번호 우선 기입, 휴대폰이 없다면 유선 전화번호 또는 회사 대표 번호 기입, 만약 없으면 빈 문자열 "")
-        - phone2: 두 번째 연락처 (명함 내에 전화번호가 2개 이상 기재되어 있는 경우, 첫 번째 기입한 번호 외의 보조 휴대전화, 회사 직통 전화, 또는 팩스 번호 등을 여기에 순차적으로 나누어 기입, 없으면 빈 문자열 "")
-        - country: 국가명 (이메일 도메인(예: .uk -> 영국, .hk -> 홍콩, .sg -> 싱가포르 등), 전화 국가코드(예: +44 -> 영국, +852 -> 홍콩, +65 -> 싱가포르), 주소 지명(예: England/London -> 영국, Hong Kong -> 홍콩 등)을 최우선적으로 정밀 유추하여 한글 국가명(예: 대한민국, 영국, 홍콩, 미국, 일본, 중국, 싱가포르 등)으로 기재하며, 도저히 유추 불가시에는 기본값 '알수없음'으로 기재하라.)
-        - address: 우편주소 또는 지번 주소 (만약 없으면 빈 문자열 "")
-        - website: 웹사이트 주소 또는 SNS 채널 (만약 없으면 빈 문자열 "")
-        - notes: 명함에 기재된 기타 비고/참고사항 및 명함 위나 주변에 볼펜/연필 등으로 직접 적은 손글씨 메모가 있다면 이를 최대한 정확하게 판독하여 기재하라.
-          손글씨 판독 시 필수 준수 사항:
-          1) 절대 "[손글씨]"라는 접두사(prefix)나 임의의 라벨을 기입하지 말고 순수한 메모 내용만 단정하게 기재할 것.
-          2) 흘려 쓴 한글 서체는 오독하기 매우 쉬우므로(예: '여자두분'을 자모 획 모양 왜곡으로 인해 '여기부부' 등으로 잘못 해석하는 등), 글자의 물리적인 획 구조를 한국어 어법 및 명함 맥락과 결합하여 이중으로 신중하게 검증하고 자연스러운 단어로 최종 판정할 것.
-          3) 손글씨가 없거나 도저히 판독할 수 없는 경우, 영어명, 소셜 링크, 슬로건 등 다른 특이사항을 기재하거나 그것도 없다면 빈 문자열 ""을 반환할 것.
-      `;
+    if (onProgress) {
+      onProgress('보안 AI 서버 분석 중...');
+    }
 
-      if (onProgress) {
-        onProgress('Gemini AI 직접 분석 중...');
+    try {
+      const response = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64: base64Data, mimeType })
+      });
+
+      if (!response.ok) {
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
       }
 
-      const models = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-1.5-flash'];
-      const payload = {
-        contents: [
-          {
-            parts: [
-              { text: promptText },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64Data
-                }
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'OBJECT',
-            properties: {
-              name: { type: 'STRING' },
-              company: { type: 'STRING' },
-              role: { type: 'STRING' },
-              email: { type: 'STRING' },
-              phone: { type: 'STRING' },
-              phone2: { type: 'STRING' },
-              country: { type: 'STRING' },
-              address: { type: 'STRING' },
-              website: { type: 'STRING' },
-              notes: { type: 'STRING' }
-            },
-            required: ['name', 'company', 'role', 'email', 'phone', 'phone2', 'country', 'address', 'website', 'notes']
-          }
-        }
-      };
+      const data = await response.json();
 
-      let response = null;
-      let lastError = null;
-
-      for (const model of models) {
-        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        try {
-          response = await fetchWithRetry(endpointUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          break;
-        } catch (error) {
-          if (error.status === 404) {
-            lastError = `모델 ${model} 지원 불가 (404)`;
-            continue;
-          }
-          throw error;
-        }
-      }
-
-      if (!response) {
-        throw new Error(`Gemini API 호출 전체 실패: ${lastError || '모든 적합 모델 응답 없음'}`);
-      }
-
-      const parsedText = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!parsedText) {
-        throw new Error('API 응답 내부에 반환 텍스트가 부재합니다.');
-      }
-
-      const normalized = parseGeminiResponse(parsedText);
-      if (!normalized) {
+      // 서버 키가 미지정되었거나 호출 한도가 소진된 경우, 에러 중단 없이 클라이언트 로컬 Tesseract.js로 즉각 복원 전환! (완벽한 폴백)
+      if (data.error === 'API_KEY_MISSING' || data.error === 'RATE_LIMITED') {
         if (onProgress) {
-          onProgress('AI 응답 형식이 비정상적이어서 로컬 파서로 복구 중...');
-        }
-        throw new Error('Gemini 응답을 JSON으로 해석하지 못했습니다.');
-      }
-
-      return normalized;
-    } else {
-      // 2) 서버리스 에지 백엔드 프록시 호출 모드
-      if (onProgress) {
-        onProgress('보안 AI 서버 분석 중...');
-      }
-
-      try {
-        const response = await fetch('/api/ocr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64: base64Data, mimeType })
-        });
-
-        if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
-        }
-
-        const data = await response.json();
-
-        // 서버 키가 미지정되었거나 호출 한도가 소진된 경우, 에러 중단 없이 클라이언트 로컬 Tesseract.js로 즉각 복원 전환! (완벽한 폴백)
-        if (data.error === 'API_KEY_MISSING' || data.error === 'RATE_LIMITED') {
-          if (onProgress) {
-            onProgress('로컬 엔진 전환 분석 중...');
-          }
-          return processCardOCRLocal(base64Data, mimeType, onProgress);
-        }
-
-        return data;
-      } catch (error) {
-        if (onProgress) {
-          onProgress('서버 분석 실패, 로컬 OCR로 복구 중...');
+          onProgress('로컬 엔진 전환 분석 중...');
         }
         return processCardOCRLocal(base64Data, mimeType, onProgress);
       }
+
+      return data;
+    } catch (error) {
+      if (onProgress) {
+        onProgress('서버 분석 실패, 로컬 OCR로 복구 중...');
+      }
+      return processCardOCRLocal(base64Data, mimeType, onProgress);
     }
   };
 
@@ -537,7 +405,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col transition-colors duration-300 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
       
       {/* 1. 상단 네비게이션 바 */}
-      <Header theme={theme} toggleTheme={toggleTheme} apiKey={apiKey} />
+      <Header theme={theme} toggleTheme={toggleTheme} />
 
       {/* 2. 에러 및 공지용 상태 배너 */}
       {banner.show && (

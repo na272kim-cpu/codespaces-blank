@@ -43,6 +43,10 @@ export async function preprocessImageDataUrl(dataUrl, mimeType = 'image/png') {
     });
 }
 
+export function extractClientGeminiApiKey() {
+    return '';
+}
+
 export function parseGeminiResponse(rawText) {
     const text = (rawText || '').toString().trim();
     if (!text) {

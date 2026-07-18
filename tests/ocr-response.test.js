@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseGeminiResponse, parseOcrTextToCardData } from '../src/utils/ocrUtils.js';
+import { extractClientGeminiApiKey, parseGeminiResponse, parseOcrTextToCardData } from '../src/utils/ocrUtils.js';
 
 test('parses fenced JSON returned by Gemini', () => {
   const raw = '```json\n{"name":"홍길동","company":"테스트컴퍼니","role":"대표","email":"hong@test.com","phone":"010-1234-5678","phone2":"","country":"대한민국","address":"서울시 강남구","website":"https://example.com","notes":""}\n```';
@@ -17,6 +17,10 @@ test('parses fenced JSON returned by Gemini', () => {
     website: 'https://example.com',
     notes: ''
   });
+});
+
+test('never exposes browser-side Gemini API keys', () => {
+  assert.equal(extractClientGeminiApiKey(), '');
 });
 
 test('extracts card fields from OCR text reliably', () => {
