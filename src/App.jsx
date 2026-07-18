@@ -268,7 +268,7 @@ export default function App() {
         - email: 대표 이메일 주소 (만약 없으면 빈 문자열 "")
         - phone: 첫 번째 연락처 (휴대폰 번호 우선 기입, 휴대폰이 없다면 유선 전화번호 또는 회사 대표 번호 기입, 만약 없으면 빈 문자열 "")
         - phone2: 두 번째 연락처 (명함 내에 전화번호가 2개 이상 기재되어 있는 경우, 첫 번째 기입한 번호 외의 보조 휴대전화, 회사 직통 전화, 또는 팩스 번호 등을 여기에 순차적으로 나누어 기입, 없으면 빈 문자열 "")
-        - country: 국가명 (이메일 도메인(예: .uk -> 영국, .hk -> 홍콩, .sg -> 싱가포르 등), 전화 국가코드(예: +44 -> 영국, +852 -> 홍콩, +65 -> 싱가포르), 주소 지명(예: England/London -> 영국, Hong Kong -> 홍콩 등)을 최우선적으로 정밀 유추하여 한글 국가명(예: 대한민국, 영국, 홍콩, 미국, 일본, 중국, 싱가포르 등)으로 기재하며, 도저히 유추 불가시에만 기본값 '대한민국'으로 판정하라.)
+        - country: 국가명 (이메일 도메인(예: .uk -> 영국, .hk -> 홍콩, .sg -> 싱가포르 등), 전화 국가코드(예: +44 -> 영국, +852 -> 홍콩, +65 -> 싱가포르), 주소 지명(예: England/London -> 영국, Hong Kong -> 홍콩 등)을 최우선적으로 정밀 유추하여 한글 국가명(예: 대한민국, 영국, 홍콩, 미국, 일본, 중국, 싱가포르 등)으로 기재하며, 도저히 유추 불가시에는 기본값 '알수없음'으로 기재하라.)
         - address: 우편주소 또는 지번 주소 (만약 없으면 빈 문자열 "")
         - website: 웹사이트 주소 또는 SNS 채널 (만약 없으면 빈 문자열 "")
         - notes: 명함에 기재된 기타 비고/참고사항 및 명함 위나 주변에 볼펜/연필 등으로 직접 적은 손글씨 메모가 있다면 이를 최대한 정확하게 판독하여 기재하라.
@@ -428,7 +428,7 @@ export default function App() {
           email: resultData.email || '',
           phone: resultData.phone || '',
           phone2: resultData.phone2 || '',
-          country: resultData.country || '대한민국',
+          country: resultData.country || '알수없음',
           address: resultData.address || '',
           website: resultData.website || '',
           notes: resultData.notes || '',

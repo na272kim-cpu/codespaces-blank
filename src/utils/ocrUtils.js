@@ -28,7 +28,7 @@ export function parseOcrTextToCardData(text) {
     const website = block.match(/https?:\/\/[^\s]+|www\.[^\s]+/i)?.[0] || '';
 
     // 4. 국가 판별
-    let country = '대한민국';
+    let country = '알수없음';
     const lowerBlock = block.toLowerCase();
     if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
         country = '일본';
@@ -216,7 +216,7 @@ export function refineParsedCardData(parsed, lines, block) {
         email: cleaned.email || '',
         phone: cleaned.phone || '',
         phone2: cleaned.phone2 || '',
-        country: cleaned.country || '대한민국',
+        country: cleaned.country || '알수없음',
         address: (cleaned.address || '').replace(/^[•·\-\s]+|[•·\-\s]+$/g, ''),
         website: cleaned.website || '',
         notes: cleaned.notes || ''
