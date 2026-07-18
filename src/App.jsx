@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Tesseract from 'tesseract.js';
 import Header from './components/Header';
 import Uploader from './components/Uploader';
 import DataTable from './components/DataTable';
@@ -212,81 +211,25 @@ export default function App() {
     }
   };
 
-  // --- Tesseract 로컬 파서 폴백 ---
-  const processCardOCRLocal = async (base64Data, mimeType, onProgress) => {
-    const dataUrl = `data:${mimeType};base64,${base64Data}`;
-    const result = await Tesseract.recognize(dataUrl, 'kor+eng', {
-      logger: (m) => {
-        if (onProgress && m && m.status) {
-          let statusText = m.status;
-          if (m.status === 'loading tesseract core') statusText = 'OCR 엔진 코어 로드 중';
-          else if (m.status === 'loaded tesseract core') statusText = 'OCR 엔진 코어 완료';
-          else if (m.status === 'initializing api') statusText = 'OCR 언어 모델 설정 중';
-          else if (m.status === 'initialized api') statusText = 'OCR 언어 모델 설정 완료';
-          else if (m.status === 'recognizing text') {
-            const percent = Math.round((m.progress || 0) * 100);
-            statusText = `텍스트 판독 중 (${percent}%)`;
-          }
-          onProgress(statusText);
-        }
-      }
-    });
-
-    const text = (result?.data?.text || '').trim();
-    if (!text) {
-      throw new Error('로컬 OCR로 텍스트를 추출하지 못했습니다.');
-    }
-
-    return parseOcrTextToCardData(text);
-  };
-
-  // --- 단건 명함 OCR 처리 분기 허브 ---
+  // --- 단건 명함 OCR 처리 ---
   const processCardOCR = async (base64Data, mimeType, onProgress) => {
     if (onProgress) {
       onProgress('보안 AI 서버 분석 중...');
     }
 
-    try {
-      const response = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base64: base64Data, mimeType })
-      });
+    const response = await fetch('/api/ocr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64: base64Data, mimeType })
+    });
 
-      if (!response.ok) {
-        const errRes = await response.json().catch(() => ({}));
-        throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
-      }
-
-      const data = await response.json();
-
-      // 서버 키가 미지정되었거나 호출 한도가 소진된 경우, 에러 중단 없이 클라이언트 로컬 Tesseract.js로 즉각 복원 전환! (완벽한 폴백)
-      if (data.error === 'API_KEY_MISSING' || data.error === 'RATE_LIMITED') {
-        setBanner({
-          show: true,
-          message: data.error === 'API_KEY_MISSING'
-            ? "⚠️ 경고: 클라우드플레어 서버에 GEMINI_API_KEY 환경 변수가 등록되지 않아 [Tesseract 로컬 백업 엔진]으로 강제 스캔되었습니다. 이 모드에서는 사람이 명함에 수기로 적은 손글씨 메모(비고란) 판독이 불가능합니다. 완벽한 AI 명함 판독을 위해 대시보드 환경변수 설정을 마쳐주세요!"
-            : "⚠️ 경고: API 요청 호출 한도가 일시적으로 가득 차 [Tesseract 로컬 백업 엔진]으로 우회 구동되었습니다. 손글씨 판독률이 한시적으로 제한됩니다.",
-          type: 'warning'
-        });
-        if (onProgress) {
-          onProgress('로컬 엔진 전환 분석 중...');
-        }
-        return processCardOCRLocal(base64Data, mimeType, onProgress);
-      }
-
-      return data;
-    } catch (error) {
-      setBanner({
-        show: true,
-        message: `⚠️ 경고: API 서버 통신 실패로 인해 [Tesseract 로컬 백업 엔진]으로 임시 긴급 가동되었습니다. (오류 사유: ${error.message || '네트워크 끊김'}). 손글씨 및 미세 폰트 판독이 불가능합니다.`,
-        type: 'warning'
-      });
-      if (onProgress) {
-        onProgress('서버 분석 실패, 로컬 OCR로 복구 중...');
-      }
-      return processCardOCRLocal(base64Data, mimeType, onProgress);
+    if (!response.ok) {
+      const errRes = await response.json().catch(() => ({}));
+      throw new Error(errRes.message || `서버 보안 필터 통신 오류 (${response.status})`);
     }
+
+    const data = await response.json();
+    return data;
   };
 
   // --- 대기 목록 일괄 OCR 스캔 가동 ---

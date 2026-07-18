@@ -18,10 +18,10 @@ export async function onRequestPost(context) {
         // 3. 환경 변수에서 Gemini API 키 획득 (대소문자 오타나 커스텀 네이밍 적극 대응)
         const apiKey = env.GEMINI_API_KEY || env.geminiApiKey || env.GEMINI_KEY || env.API_KEY || env.googleGeminiApiKey || "";
 
-        // 열쇠가 없을 시 로컬 Tesseract 모드용 폴백 신호 반환
+        // 열쇠가 없을 시 에러 반환
         if (!apiKey) {
-            return new Response(JSON.stringify({ error: "API_KEY_MISSING", message: "서버에 설정된 API 키가 없습니다. 로컬 OCR 모드로 진행합니다." }), {
-                status: 200,
+            return new Response(JSON.stringify({ error: "API_KEY_MISSING", message: "서버에 설정된 GEMINI_API_KEY 환경 변수가 없습니다. 클라우드플레어 대시보드에서 API 키를 설정해 주세요." }), {
+                status: 401,
                 headers
             });
         }
@@ -136,8 +136,8 @@ export async function onRequestPost(context) {
         }
 
         if (response.status === 429) {
-            return new Response(JSON.stringify({ error: "RATE_LIMITED", message: "API 요청 한도가 일시적으로 초과되었습니다. 로컬 모드로 자동 전환합니다." }), {
-                status: 200,
+            return new Response(JSON.stringify({ error: "RATE_LIMITED", message: "구글 Gemini API 요청 호출 한도가 일시적으로 초과되었습니다. 잠시 후 다시 시도해 주세요." }), {
+                status: 429,
                 headers
             });
         }
