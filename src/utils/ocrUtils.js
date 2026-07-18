@@ -9,17 +9,19 @@ export function parseOcrTextToCardData(text) {
     // 1. 대표 이메일 추출
     const email = block.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
 
-    // 2. 다중 연락처 추출 (Tesseract의 숫자 오독(0<->O, 1<->l/I) 자동 복원 및 완화정규식 탑재)
-    const rawPhoneMatches = block.match(/(?:\+?[0OolI1i]{1,3}[-\s. ]?)?(?:[0OolI1i]{2,4})[-\s. ]?[0OolI1i\d]{3,4}[-\s. ]?[0OolI1i\d]{4}/g) || [];
+    // 2. 다중 연락처 추출 (글로벌 괄호형, 국가코드형, 대시형, 공백형 모두 지원하는 범용 정규식)
+    // Tesseract의 대표 오독 패턴(0<->O, 1<->l/I)까지 미리 통합 수용
+    const rawPhoneMatches = block.match(/(?:\+?[\dOolI]{1,4}[-\s.()]*){2,}[\dOolI]{4}/g) || [];
     const phoneMatches = rawPhoneMatches.map(p => {
-        // 오독된 글자(O, o -> 0 / l, I, i -> 1)를 숫자로 자동 복원 정제
-        return p.replace(/[O_o]/g, '0')
-                .replace(/[lIi]/g, '1')
-                .replace(/[^0-9+\-\s.()]/g, '')
-                .trim();
+        // 오독 글자 자동 복원 및 포맷 정돈
+        let cleanedPhone = p.replace(/[O_o]/g, '0')
+                            .replace(/[lIi]/g, '1')
+                            .trim();
+        return cleanedPhone;
     }).filter(p => {
-        // 보정된 국번 유효성 기본 검증 (0, 1, + 등으로 유효하게 시작하는 연락처 포맷 필터링)
-        return p.startsWith('0') || p.startsWith('+') || p.startsWith('1');
+        // 공백 및 기호 제거 후 순수 숫자만 추렸을 때 7자리에서 15자리 사이의 전형적인 전화번호 포맷인지 필터링
+        const digitsOnly = p.replace(/[^0-9]/g, '');
+        return digitsOnly.length >= 7 && digitsOnly.length <= 15;
     });
     const phone = phoneMatches[0] || '';
     const phone2 = phoneMatches[1] || '';
@@ -197,8 +199,17 @@ export function refineParsedCardData(parsed, lines, block) {
         }
     }
 
-    // 연락처 및 보조 연락처 정밀 추출 (순차적 배치)
-    const matchedPhones = block.match(/(?:\+82[-\s]?)?(?:01[016789]|02|0[3-9]{1,2}[1-5])[-\s]?\d{3,4}[-\s]?\d{4}/g) || [];
+    // 연락처 및 보조 연락처 정밀 추출 (글로벌 규격 수용형)
+    const rawMatchedPhones = block.match(/(?:\+?[\dOolI]{1,4}[-\s.()]*){2,}[\dOolI]{4}/g) || [];
+    const matchedPhones = rawMatchedPhones.map(p => {
+        return p.replace(/[O_o]/g, '0')
+                .replace(/[lIi]/g, '1')
+                .trim();
+    }).filter(p => {
+        const digitsOnly = p.replace(/[^0-9]/g, '');
+        return digitsOnly.length >= 7 && digitsOnly.length <= 15;
+    });
+
     if (matchedPhones.length > 0) {
         if (!cleaned.phone) {
             cleaned.phone = matchedPhones[0];
@@ -206,7 +217,6 @@ export function refineParsedCardData(parsed, lines, block) {
                 cleaned.phone2 = matchedPhones[1];
             }
         } else if (!cleaned.phone2) {
-            // 첫 번째 연락처가 이미 파싱되어 있고 다르고 새로운 연락처가 있다면 연락처2에 기입
             const uniquePhones = matchedPhones.filter(num => num !== cleaned.phone);
             if (uniquePhones.length > 0) {
                 cleaned.phone2 = uniquePhones[0];
