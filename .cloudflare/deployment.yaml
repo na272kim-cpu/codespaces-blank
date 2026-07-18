@@ -1,0 +1,4 @@
+name: card2sheet
+framework: vite
+buildCommand: npm run build
+outputDirectory: dist
