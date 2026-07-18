@@ -150,11 +150,11 @@ function validateParsedCardData(parsed) {
         cleaned.name = '';
     }
 
-    if (cleaned.company && /인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram/i.test(cleaned.company)) {
+    if (cleaned.company && /인쇄\s*정보|수기\s*메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram/i.test(cleaned.company)) {
         cleaned.company = '';
     }
 
-    if (cleaned.role && /(인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일)/i.test(cleaned.role)) {
+    if (cleaned.role && /(인쇄\s*정보|수기\s*메모|메모|회사명|주소|웹사이트|이메일)/i.test(cleaned.role)) {
         cleaned.role = '';
     }
 
@@ -268,6 +268,7 @@ export function parseOcrTextToCardData(text) {
     const koreanNamePattern = /^[가-힣]{2,5}$/;
     const englishNamePattern = /^[A-Za-z][A-Za-z\s.'-]{1,25}$/;
     const shortNamePattern = /^[가-힣]{2,4}$/;
+    const noiseLabelPatterns = /인쇄\s*정보|수기\s*메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic|note|label|print/i;
 
     let company = '';
     let role = '';
@@ -289,32 +290,32 @@ export function parseOcrTextToCardData(text) {
         return cleaned.replace(/^[•·\-\s:,]+|[•·\-\s:,]+$/g, '').trim();
     }).filter(Boolean);
 
-    // 6. 주소 추출 (가장 긴 라인 위주 혹은 패턴 매칭)
+    // 6. 주소 추출 (명확한 주소 패턴만 받음)
     for (const line of cleanedLines) {
-        if (addressPatterns.test(line) && !companyPatterns.test(line) && !rolePatterns.test(line)) {
-            // 이름으로 잘못 인식되지 않는 주소 필터
-            const trimmedLine = line.replace(/[•·\-\s]+/g, '');
-            if (!koreanNamePattern.test(trimmedLine) && trimmedLine.length > 5) {
+        const trimmed = line.replace(/[•·\-\s]+/g, '');
+        if (addressPatterns.test(line) && !companyPatterns.test(line) && !rolePatterns.test(line) && !noiseLabelPatterns.test(line)) {
+            if (!koreanNamePattern.test(trimmed) && trimmed.length > 6) {
                 address = line;
                 break;
             }
         }
     }
 
-    // 7. 직급(role) 추출 - 라인에서 직급 단어만 추출하여 깔끔하게 분리
+    // 7. 직급(role) 추출 - 매우 제한적으로만 받음
     for (const line of cleanedLines) {
+        if (noiseLabelPatterns.test(line)) continue;
         const roleMatch = line.match(rolePatterns);
-        if (roleMatch) {
-            role = roleMatch[0]; // 전체 라인이 아니라 오직 직급 단어('대표' 등)만 추출!
+        if (roleMatch && line.replace(roleMatch[0], '').trim().length <= 8) {
+            role = roleMatch[0];
             break;
         }
     }
 
-    // 8. 회사명(company) 추출
+    // 8. 회사명(company) 추출 - 노이즈/메모/인쇄 안내는 제외하고, 명확한 회사 패턴만 선택
     const companyCandidates = cleanedLines.filter((line) => {
         const trimmed = line.replace(/[•·\-\s]+/g, '').trim();
-        if (!trimmed || trimmed.length < 2) return false;
-        if (/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(trimmed)) return false;
+        if (!trimmed || trimmed.length < 3) return false;
+        if (noiseLabelPatterns.test(trimmed)) return false;
         if (addressPatterns.test(line)) return false;
         return companyPatterns.test(line);
     });
@@ -324,12 +325,11 @@ export function parseOcrTextToCardData(text) {
         company = preferred.replace(/[•·\-\s]+/g, '').trim();
     }
 
-    // 9. 이름(name) 추출 - 라인 단위로 우선순위 판단
+    // 9. 이름(name) 추출 - 너무 긴/노이즈형 후보는 제외
     const nameCandidates = [];
     for (const line of cleanedLines) {
         const cleanLine = line.replace(/[•·\-\s]+/g, '').trim();
-        if (!cleanLine) continue;
-        if (/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(cleanLine)) continue;
+        if (!cleanLine || noiseLabelPatterns.test(cleanLine) || cleanLine.length > 12) continue;
 
         let nameCandidate = cleanLine;
         const roleMatch = line.match(rolePatterns);
@@ -337,20 +337,13 @@ export function parseOcrTextToCardData(text) {
             nameCandidate = cleanLine.replace(roleMatch[0], '').trim();
         }
 
-        if (shortNamePattern.test(nameCandidate) || englishNamePattern.test(nameCandidate)) {
+        if (nameCandidate && (shortNamePattern.test(nameCandidate) || englishNamePattern.test(nameCandidate))) {
             nameCandidates.push(nameCandidate);
         }
     }
 
     if (nameCandidates.length > 0) {
         name = nameCandidates.find((candidate) => candidate.length >= 2 && candidate.length <= 5) || nameCandidates[0];
-    }
-
-    // 10. 만약 이름을 여전히 못 찾았다면, ignorePatterns가 없고 짧은 라인을 차선책으로 선택
-    if (!name) {
-        const ignorePatterns = /회사|주식회사|지점|본사|㈜|컴퍼니|솔루션|대표|이사|부장|차장|과장|대리|팀장|@|http|www|전화|주소|tel|mobile/i;
-        const fallback = cleanedLines.find(line => !ignorePatterns.test(line) && line.length <= 15) || '';
-        name = fallback.replace(/[•·\-\s]+/g, '').trim();
     }
 
     const normalized = {
@@ -373,23 +366,26 @@ export function refineParsedCardData(parsed, lines, block) {
     const cleaned = { ...parsed };
     const text = `${lines.join(' ')} ${block}`.toLowerCase();
 
-    if (!cleaned.company && /회사|주식회사|㈜|corp|co\.|ltd|llc|inc|solutions|tech|technology|software|systems|studio|media|consulting|partners|cosmetics/.test(block)) {
-        const companyMatch = block.match(/([가-힣A-Za-z0-9.&()\- ]{2,40})(?:\n|\s)(대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|담당|개발자|엔지니어|기획자|디자이너|마케터|주임)/);
-        if (companyMatch) {
-            cleaned.company = companyMatch[1].trim();
+    if (!cleaned.company) {
+        const companyCandidates = lines.filter(line => {
+            const trimmed = line.replace(/[•·\-\s]+/g, '');
+            return trimmed.length >= 3 && /회사|주식회사|㈜|corp|co\.|ltd|llc|inc|solutions|tech|technology|software|systems|studio|media|consulting|partners|cosmetics/.test(trimmed) && !/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(trimmed);
+        });
+        if (companyCandidates.length > 0) {
+            cleaned.company = companyCandidates[0].replace(/[•·\-\s]+/g, '').trim();
         }
     }
 
     if (!cleaned.name) {
         const nameCandidates = lines.filter(line => {
             const trimmed = line.replace(/[•·\-\s]+/g, '');
-            return /^[가-힣]{2,5}$/.test(trimmed) || /^[A-Za-z][A-Za-z\s.'-]{1,25}$/.test(trimmed);
+            return trimmed.length >= 2 && trimmed.length <= 12 && (/^[가-힣]{2,5}$/.test(trimmed) || /^[A-Za-z][A-Za-z\s.'-]{1,25}$/.test(trimmed)) && !/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(trimmed);
         });
         cleaned.name = nameCandidates[0] || '';
     }
 
     if (!cleaned.role) {
-        const roleLine = lines.find(line => /(대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|담당|개발자|엔지니어|기획자|디자이너|마케터|주임)/i.test(line));
+        const roleLine = lines.find(line => /(대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|담당|개발자|엔지니어|기획자|디자이너|마케터|주임)/i.test(line) && !/인쇄 정보|수기 메모|메모|회사명|주소|웹사이트|이메일|whatsapp|instagram|official|clinic/i.test(line));
         if (roleLine) {
             const roleMatch = roleLine.match(/(대표|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|담당|개발자|엔지니어|기획자|디자이너|마케터|주임)/i);
             if (roleMatch) {
