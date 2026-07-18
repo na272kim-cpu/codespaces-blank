@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Uploader from './components/Uploader';
 import DataTable from './components/DataTable';
+import PremiumModal from './components/PremiumModal';
 import { parseGeminiResponse, parseOcrTextToCardData, preprocessImageDataUrl } from './utils/ocrUtils';
 
 export default function App() {
@@ -39,6 +40,9 @@ export default function App() {
     message: '',
     type: 'success' // 'success' | 'error'
   });
+
+  // --- 프리미엄 모달 노출 상태 ---
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   // --- 테마 적용 ---
   useEffect(() => {
@@ -360,7 +364,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col transition-colors duration-300 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
       
       {/* 1. 상단 네비게이션 바 */}
-      <Header theme={theme} toggleTheme={toggleTheme} />
+      <Header theme={theme} toggleTheme={toggleTheme} onShowPremium={() => setShowPremiumModal(true)} />
 
       {/* 2. 에러 및 공지용 상태 배너 */}
       {banner.show && (
@@ -447,6 +451,13 @@ export default function App() {
         </span>
         <span id="toastMsg">{toast.message}</span>
       </div>
+
+      {/* 5. 프리미엄 요금제 모달 */}
+      <PremiumModal
+        show={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        showToast={showToast}
+      />
     </div>
   );
 }

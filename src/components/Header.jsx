@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Header({ theme, toggleTheme }) {
+export default function Header({ theme, toggleTheme, onShowPremium }) {
   return (
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -19,6 +19,16 @@ export default function Header({ theme, toggleTheme }) {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* 프리미엄 요금제 버튼 */}
+          <button
+            onClick={onShowPremium}
+            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            title="프리미엄 요금제 보기"
+          >
+            <i className="fa-solid fa-crown text-xs sm:text-sm"></i>
+            <span>Premium</span>
+          </button>
+
           {/* 테마 스위처 */}
           <button
             onClick={toggleTheme}
