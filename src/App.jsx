@@ -15,7 +15,6 @@ export default function App() {
 
   // --- API Key 및 클라이언트 구동 상태 ---
   const [apiKey, setApiKey] = useState('');
-  const [apiType, setApiType] = useState(''); // 'openai' | 'gemini'
 
   // --- 비즈니스 상태 ---
   const [cardQueue, setCardQueue] = useState([]);
@@ -72,33 +71,18 @@ export default function App() {
   // --- API Key 자동 탐색 및 주입 ---
   useEffect(() => {
     const candidates = [
-      window.__openaiApiKey,
-      window.OPENAI_API_KEY,
-      window.openaiApiKey,
       window.__geminiApiKey,
       window.GEMINI_API_KEY,
       window.geminiApiKey,
-      localStorage.getItem('openaiApiKey'),
       localStorage.getItem('geminiApiKey'),
-      localStorage.getItem('apiKey'),
-      new URLSearchParams(window.location.search).get('openaiApiKey'),
+      localStorage.getItem('googleGeminiApiKey'),
       new URLSearchParams(window.location.search).get('geminiApiKey'),
       new URLSearchParams(window.location.search).get('apiKey')
     ];
 
     for (const value of candidates) {
       if (typeof value === 'string' && value.trim()) {
-        const trimmed = value.trim();
-        setApiKey(trimmed);
-        
-        // 키 종류 자동 감별 (OpenAI는 sk-로 시작하고, Gemini는 AIzaSy로 시작함)
-        if (trimmed.startsWith('sk-')) {
-          setApiType('openai');
-        } else if (trimmed.startsWith('AIzaSy')) {
-          setApiType('gemini');
-        } else {
-          setApiType('gemini'); // 그 외 기본값은 gemini로 설정
-        }
+        setApiKey(value.trim());
         break;
       }
     }
@@ -289,82 +273,6 @@ export default function App() {
           3) 손글씨가 없거나 도저히 판독할 수 없는 경우, 영어명, 소셜 링크, 슬로건 등 다른 특이사항을 기재하거나 그것도 없다면 빈 문자열 ""을 반환할 것.
       `;
 
-      // =========================================================================
-      // [직접 가동 루트 A] OpenAI 직접 호출 구동
-      // =========================================================================
-      if (apiType === 'openai') {
-        if (onProgress) {
-          onProgress('OpenAI GPT-4o 직접 분석 중...');
-        }
-
-        const endpointUrl = "https://api.openai.com/v1/chat/completions";
-        const openaiPayload = {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: promptText
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${mimeType};base64,${base64Data}`
-                  }
-                }
-              ]
-            }
-          ],
-          // Structured Outputs를 명시하여 오차 없는 데이터 반환률 보장 (엄격 스키마)
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "business_card_data",
-              strict: true,
-              schema: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  company: { type: "string" },
-                  role: { type: "string" },
-                  email: { type: "string" },
-                  phone: { type: "string" },
-                  phone2: { type: "string" },
-                  country: { type: "string" },
-                  address: { type: "string" },
-                  website: { type: "string" },
-                  notes: { type: "string" }
-                },
-                required: ["name", "company", "role", "email", "phone", "phone2", "country", "address", "website", "notes"],
-                additionalProperties: false
-              }
-            }
-          }
-        };
-
-        const response = await fetchWithRetry(endpointUrl, {
-          method: 'POST',
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify(openaiPayload)
-        });
-
-        const data = await response.json();
-        const parsedText = data.choices?.[0]?.message?.content;
-        if (!parsedText) {
-          throw new Error('OpenAI 응답 내부에 반환 텍스트가 부재합니다.');
-        }
-
-        return JSON.parse(parsedText);
-      }
-
-      // =========================================================================
-      // [직접 가동 루트 B] Gemini 직접 호출 구동
-      // =========================================================================
       if (onProgress) {
         onProgress('Gemini AI 직접 분석 중...');
       }
@@ -595,7 +503,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col transition-colors duration-300 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
       
       {/* 1. 상단 네비게이션 바 */}
-      <Header theme={theme} toggleTheme={toggleTheme} apiKey={apiKey} apiType={apiType} />
+      <Header theme={theme} toggleTheme={toggleTheme} apiKey={apiKey} />
 
       {/* 2. 에러 및 공지용 상태 배너 */}
       {banner.show && (
