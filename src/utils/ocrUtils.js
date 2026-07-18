@@ -158,21 +158,6 @@ export function parseOcrTextToCardData(text) {
         name = fallback.replace(/[•·\-\s]+/g, '').trim();
     }
 
-    // 다른 주요 필드(이름, 회사, 직급, 메일, 번호, 주소, 웹사이트)로 사용되지 않고 남은 줄들을 비고(Notes)란에 캐치올 백업
-    const parsedValues = [name, company, role, address, email, phone, phone2, website];
-    const remainingLines = cleanedLines.filter(line => {
-        const trimmed = line.trim();
-        if (!trimmed) return false;
-        // 이미 기입된 정보에 포함되어 있거나 기입된 정보가 이 줄을 포함하고 있는지 대조하여 제거 (정확한 중복 방지)
-        return !parsedValues.some(val => {
-            if (!val) return false;
-            const cleanVal = val.toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-            const cleanTrimmed = trimmed.toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-            return cleanVal.includes(cleanTrimmed) || cleanTrimmed.includes(cleanVal);
-        });
-    });
-    const unparsedNotes = remainingLines.join(', ');
-
     const normalized = {
         name: name.replace(/^[•·\-\s]+|[•·\-\s]+$/g, ''),
         company: company.replace(/^[•·\-\s]+|[•·\-\s]+$/g, ''),
@@ -183,7 +168,7 @@ export function parseOcrTextToCardData(text) {
         country,
         address: address.replace(/^[•·\-\s]+|[•·\-\s]+$/g, ''),
         website,
-        notes: unparsedNotes
+        notes: ''
     };
 
     return refineParsedCardData(normalized, lines, block);
