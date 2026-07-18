@@ -27,20 +27,34 @@ export function parseOcrTextToCardData(text) {
     // 3. 웹사이트 추출
     const website = block.match(/https?:\/\/[^\s]+|www\.[^\s]+/i)?.[0] || '';
 
-    // 4. 국가 판별
+    // 4. 국가 판별 (우선순위: 국번/국가번호 감지 및 정교한 단어 경계 매칭)
     let country = '알수없음';
     const lowerBlock = block.toLowerCase();
-    if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
-        country = '일본';
-    } else if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || lowerBlock.includes('hk')) {
+    
+    // 1순위: 홍콩 (홍콩 국번 852 및 키워드 감지)
+    if (lowerBlock.includes('hong') || lowerBlock.includes('홍콩') || lowerBlock.includes('hk') || lowerBlock.includes('852')) {
         country = '홍콩';
+    } 
+    // 2순위: 영국 (영국 국번 44 및 키워드 감지)
+    else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || lowerBlock.includes('uk') || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('44')) {
+        country = '영국';
+    } 
+    // 3순위: 싱가포르 (싱가포르 국번 65 및 키워드 감지)
+    else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || lowerBlock.includes('sg') || lowerBlock.includes('65')) {
+        country = '싱가포르';
+    } 
+    // 기타 주요 아시아 거점
+    else if (lowerBlock.includes('japan') || lowerBlock.includes('일본') || lowerBlock.includes('tokyo') || lowerBlock.includes('東京')) {
+        country = '일본';
     } else if (lowerBlock.includes('china') || lowerBlock.includes('중국') || lowerBlock.includes('beijing') || lowerBlock.includes('北京')) {
         country = '중국';
-    } else if (lowerBlock.includes('united kingdom') || lowerBlock.includes('england') || lowerBlock.includes('uk') || lowerBlock.includes('london') || lowerBlock.includes('영국') || lowerBlock.includes('잉글랜드') || lowerBlock.includes('london')) {
-        country = '영국';
-    } else if (lowerBlock.includes('singapore') || lowerBlock.includes('싱가포르') || lowerBlock.includes('sg')) {
-        country = '싱가포르';
-    } else if (lowerBlock.includes('germany') || lowerBlock.includes('독일') || lowerBlock.includes('berlin') || lowerBlock.includes('deutschland')) {
+    } else if (lowerBlock.includes('taiwan') || lowerBlock.includes('대만') || lowerBlock.includes('taipei') || lowerBlock.includes('台灣')) {
+        country = '대만';
+    } else if (lowerBlock.includes('vietnam') || lowerBlock.includes('베트남') || lowerBlock.includes('hanoi') || lowerBlock.includes('ho chi minh')) {
+        country = '베트남';
+    } 
+    // 서구권 거점
+    else if (lowerBlock.includes('germany') || lowerBlock.includes('독일') || lowerBlock.includes('berlin') || lowerBlock.includes('deutschland')) {
         country = '독일';
     } else if (lowerBlock.includes('france') || lowerBlock.includes('프랑스') || lowerBlock.includes('paris')) {
         country = '프랑스';
@@ -48,11 +62,9 @@ export function parseOcrTextToCardData(text) {
         country = '캐나다';
     } else if (lowerBlock.includes('australia') || lowerBlock.includes('호주') || lowerBlock.includes('sydney')) {
         country = '호주';
-    } else if (lowerBlock.includes('taiwan') || lowerBlock.includes('대만') || lowerBlock.includes('taipei') || lowerBlock.includes('台灣')) {
-        country = '대만';
-    } else if (lowerBlock.includes('vietnam') || lowerBlock.includes('베트남') || lowerBlock.includes('hanoi') || lowerBlock.includes('ho chi minh')) {
-        country = '베트남';
-    } else if (lowerBlock.includes('usa') || lowerBlock.includes('america') || lowerBlock.includes('united states') || lowerBlock.includes('미국')) {
+    } 
+    // 미국 감지 (LAU -> USA 오독 충돌 방지를 위해 단어 경계 \b 매칭 적용)
+    else if (/\b(usa|america|united states)\b/i.test(lowerBlock) || lowerBlock.includes('미국')) {
         country = '미국';
     }
 
