@@ -58,6 +58,16 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // --- 안내 배너(info) 자동 소멸 타이머 (5초) ---
+  useEffect(() => {
+    if (banner.show && banner.type === 'info') {
+      const timer = setTimeout(() => {
+        setBanner(prev => ({ ...prev, show: false }));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [banner.show, banner.type]);
+
   // --- API Key 자동 탐색 및 주입 ---
   useEffect(() => {
     const candidates = [
