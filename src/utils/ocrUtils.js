@@ -77,7 +77,7 @@ export function parseOcrTextToCardData(text) {
     // 5. 각 라인에서 이미 추출된 이메일, 전화번호, 웹사이트를 지워서 오독을 원천 차단 (Subtractive Cleaning)
     const companyPatterns = /(회사|주식회사|㈜|컴퍼니|솔루션|서비스|시스템|스튜디오|네트워크|테크|테크놀로지|미디어|파이낸스|컨설팅|파트너스|bank|finance|consulting|partners|group|labs|lab|software|soft|systems|solutions|technology|tech|studio|media|service|services|corp|ltd|llc|co\.)/i;
     const rolePatterns = /(대표|대표이사|이사|부장|차장|과장|대리|사원|매니저|팀장|센터장|실장|연구원|교수|선생님|직책|담당|개발자|엔지니어|기획자|디자이너|마케터|운영|관리|총괄|주임|개발팀장|본부장)/i;
-    const addressPatterns = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|해외|[가-힣]+(?:시|도|구|군|로|길|읍|면|동))|주소|우편|번지/i;
+    const addressPatterns = /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|해외|[가-힣]+(?:시|도|구|군|로|길|읍|면|동))|주소|우편|번지|\b(street|road|st|rd|ave|avenue|blvd|highway|way|lane|drive|dr|court|ct|plaza|place|pl|square|sq|building|bldg|floor|fl|suite|ste|room|rm|block|blk|district|county|city|state|zip|postal|zone)\b/i;
     const koreanNamePattern = /^[가-힣]{2,5}$/;
     const englishNamePattern = /^[A-Za-z][A-Za-z\s.'-]{1,25}$/;
 
@@ -196,8 +196,9 @@ export function refineParsedCardData(parsed, lines, block) {
         }
     }
 
-    if (!cleaned.address && /서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주/.test(block)) {
-        const addrMatch = block.match(/([가-힣0-9\s\-.,]+(?:시|도|구|군|로|길|동|읍|면|번지))/);
+    if (!cleaned.address && /서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주|street|road|st|rd|ave|building|bldg|floor|fl|suite|block|postal|zip/i.test(block)) {
+        const addrMatch = block.match(/([A-Za-z0-9\s\-.,#]+(?:street|road|st|rd|ave|building|bldg|floor|fl|suite|block|postal|zip|city|state|country|district))/i) ||
+                          block.match(/([가-힣0-9\s\-.,]+(?:시|도|구|군|로|길|동|읍|면|번지))/);
         if (addrMatch) {
             cleaned.address = addrMatch[1].trim();
         }
