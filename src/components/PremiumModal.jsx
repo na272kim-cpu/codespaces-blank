@@ -111,87 +111,79 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
             
             {/* FREE PLAN */}
             <label 
-              className={`flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all ${
+              className={`flex items-center justify-between p-3.5 border-2 rounded-xl cursor-pointer transition-all ${
                 selectedPlan === 'FREE'
                   ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/20'
                   : 'border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <input 
                   type="radio" 
                   name="plan" 
                   value="FREE"
                   checked={selectedPlan === 'FREE'}
                   onChange={() => setSelectedPlan('FREE')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                 />
-                <div className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-lg text-sm">🌱</div>
+                <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-lg">🌱</div>
                 <div className="text-left">
-                  <div className="font-bold text-slate-800 dark:text-white text-xs">Free Plan</div>
+                  <div className="font-bold text-slate-800 dark:text-white text-lg">Free Plan</div>
                 </div>
               </div>
-              <div className="text-xs font-extrabold text-slate-600 dark:text-slate-300 whitespace-nowrap">Free</div>
+              <div className="text-lg font-extrabold text-slate-600 dark:text-slate-300 whitespace-nowrap">Free</div>
             </label>
 
             {/* PRO PLAN */}
             <label 
-              className={`flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all ${
+              className={`flex items-center justify-between p-3.5 border-2 rounded-xl cursor-pointer transition-all ${
                 selectedPlan === 'PRO'
                   ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/20'
                   : 'border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <input 
                   type="radio" 
                   name="plan" 
                   value="PRO"
                   checked={selectedPlan === 'PRO'}
                   onChange={() => setSelectedPlan('PRO')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                 />
-                <div className="bg-amber-100 dark:bg-amber-950/40 p-1.5 rounded-lg text-sm">⭐</div>
+                <div className="bg-amber-100 dark:bg-amber-950/40 p-2 rounded-lg text-lg">⭐</div>
                 <div className="text-left">
-                  <div className="font-bold text-slate-800 dark:text-white text-xs">Pro Plan</div>
+                  <div className="font-bold text-slate-800 dark:text-white text-lg">Pro Plan</div>
                 </div>
               </div>
-              <div className="text-xs font-extrabold text-blue-600 dark:text-blue-400 whitespace-nowrap">$15/월</div>
+              <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400 whitespace-nowrap">$15/월</div>
             </label>
 
             {/* EVENT PASS */}
             <label 
-              className={`flex items-center justify-between p-3 border-2 rounded-xl cursor-pointer transition-all ${
+              className={`flex items-center justify-between p-3.5 border-2 rounded-xl cursor-pointer transition-all ${
                 selectedPlan === 'EVENT'
                   ? 'border-blue-500 bg-blue-50/20 dark:bg-blue-950/20'
                   : 'border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <input 
                   type="radio" 
                   name="plan" 
                   value="EVENT"
                   checked={selectedPlan === 'EVENT'}
                   onChange={() => setSelectedPlan('EVENT')}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                 />
-                <div className="bg-orange-100 dark:bg-orange-950/40 p-1.5 rounded-lg text-sm">⚡</div>
+                <div className="bg-orange-100 dark:bg-orange-950/40 p-2 rounded-lg text-lg">⚡</div>
                 <div className="text-left">
-                  <div className="font-bold text-slate-800 dark:text-white text-xs">Event Pass</div>
+                  <div className="font-bold text-slate-800 dark:text-white text-lg">Event Pass</div>
                 </div>
               </div>
-              <div className="text-xs font-extrabold text-orange-600 dark:text-orange-400 whitespace-nowrap">$29/회</div>
+              <div className="text-lg font-extrabold text-orange-600 dark:text-orange-400 whitespace-nowrap">$29/회</div>
             </label>
           </div>
-        </div>
-
-        {/* 현재 이용 중인 요금제 배지 */}
-        <div className="mt-4 px-3 py-2 bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100/60 dark:border-blue-950/30 rounded-xl flex justify-between items-center text-xs">
-          <span className="text-slate-500 dark:text-slate-400">현재 적용 중인 요금제:</span>
-          <span className="font-bold text-blue-600 dark:text-blue-400 bg-blue-100/40 dark:bg-blue-950/30 px-2.5 py-1 rounded-lg">
-            {activePlan === 'FREE' ? 'Free Plan' : activePlan === 'PRO' ? 'Pro Plan ($15/월)' : 'Event Pass ($29/일회성)'}
-          </span>
         </div>
 
         {/* 하단 버튼 영역 */}
