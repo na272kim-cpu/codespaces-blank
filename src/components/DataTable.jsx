@@ -259,7 +259,7 @@ export default function DataTable({
           </button>
           <button
             onClick={handleExportCsv}
-            className="px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-slate-100 font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-lg shadow-slate-700/10"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-600/10"
             title="UTF-8 범용 CSV 다운로드"
           >
             <i className="fa-solid fa-file-csv"></i> CSV 저장
@@ -291,7 +291,7 @@ export default function DataTable({
               <th className="p-3 font-bold w-48">주소</th>
               <th className="p-3 font-bold w-36">웹사이트</th>
               <th className="p-3 font-bold w-40">비고</th>
-              <th className="p-3 font-bold text-center w-20">명함 원본</th>
+              <th className="p-3 font-bold text-center w-20">이미지</th>
               <th className="p-3 font-bold text-center w-12">삭제</th>
             </tr>
           </thead>
