@@ -111,8 +111,12 @@ export default function Uploader({
             {/* 일괄 진행 바 */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-500 truncate max-w-[80%]">{progressLabel || '대기 중...'}</span>
-                <span className="text-primary-600">{progressPercent}%</span>
+                <span className="text-slate-500 truncate max-w-[80%]">
+                  {isProcessing ? (progressLabel || '분석 중...') : `업로드 된 이미지 - ${cardQueue.length}`}
+                </span>
+                {isProcessing && (
+                  <span className="text-primary-600">{progressPercent}%</span>
+                )}
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-900 h-2 rounded-full overflow-hidden">
                 <div
@@ -128,7 +132,7 @@ export default function Uploader({
                 disabled={isProcessing}
                 className="py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-primary-500/15"
               >
-                <i className="fa-solid fa-play"></i> 일괄 분석 시작
+                <i className="fa-solid fa-play"></i> 변환하기
               </button>
               <button
                 onClick={onClearQueue}
@@ -141,27 +145,6 @@ export default function Uploader({
           </div>
         )}
       </div>
-
-      {/* 50장 이상 업로드 시 프리미엄 안내 배너 */}
-      {activePlan === 'FREE' && cardQueue.length >= 50 && (
-        <button
-          onClick={onShowPremium}
-          className="w-full p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white font-extrabold text-sm shadow-md shadow-orange-500/10 hover:shadow-orange-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-between gap-3 animate-fadeIn border border-amber-400"
-        >
-          <div className="flex items-center gap-2.5 text-left">
-            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white text-base flex-shrink-0 animate-pulse">
-              <i className="fa-solid fa-crown"></i>
-            </div>
-            <div>
-              <p className="font-black text-sm text-white">This mode is premium</p>
-              <p className="text-[10px] text-white/95 font-semibold mt-0.5">51장 이상 업로드 또는 다운로드는 프리미엄 요금제가 필요합니다.</p>
-            </div>
-          </div>
-          <span className="text-[10px] bg-white text-orange-600 font-black px-2.5 py-1.5 rounded-xl shadow-sm whitespace-nowrap">
-            UPGRADE 👑
-          </span>
-        </button>
-      )}
 
       {/* 등록 목록 */}
       <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-sm">
