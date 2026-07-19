@@ -138,19 +138,26 @@ export default function PremiumModal({ show, isOpen, onClose, showToast, activeP
         </div>
 
         {/* 액션 버튼 */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
-          <button 
-            onClick={onClose} 
-            className="px-6 py-3 font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition"
-          >
-            닫기
-          </button>
-          <button 
-            onClick={handleApplyPlan}
-            className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-200 active:scale-95 transition-transform"
-          >
-            구독하기
-          </button>
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-8 mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
+          {/* 왼쪽: 닫기 버튼 */}
+          <div className="flex justify-start">
+            <button 
+              onClick={onClose} 
+              className="w-full md:w-auto md:px-10 py-3 font-semibold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition active:scale-95 transition-transform"
+            >
+              닫기
+            </button>
+          </div>
+          
+          {/* 오른쪽: 구독하기 버튼 */}
+          <div>
+            <button 
+              onClick={handleApplyPlan}
+              className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-200 active:scale-95 transition-transform"
+            >
+              구독하기
+            </button>
+          </div>
         </div>
       </div>
     </div>
