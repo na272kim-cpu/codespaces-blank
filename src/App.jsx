@@ -469,7 +469,7 @@ export default function App() {
             대량 명함 이미지를 텍스트로
           </h1>
           <p className="text-blue-600 dark:text-blue-400 text-sm sm:text-base font-bold">
-            Card 2 Sheet OCR 프로그램 (React)
+            Card 2 Sheet OCR 프로그램
           </p>
         </div>
 

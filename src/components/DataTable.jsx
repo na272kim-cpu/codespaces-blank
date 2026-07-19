@@ -255,7 +255,7 @@ export default function DataTable({
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-600/10"
             title="이미지 일체형 정식 엑셀 다운로드"
           >
-            <i className="fa-solid fa-file-excel"></i> 엑셀로 내보내기
+            <i className="fa-solid fa-file-excel"></i> 엑셀 저장
           </button>
           <button
             onClick={handleExportCsv}
@@ -279,7 +279,7 @@ export default function DataTable({
       <div className="flex-grow overflow-x-auto border border-slate-150 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40 custom-scrollbar">
         <table className="w-full border-collapse text-left text-xs min-w-[1200px]">
           <thead>
-            <tr className="bg-slate-50/50 dark:bg-slate-900/80 border-b border-slate-150 dark:border-slate-800 text-slate-400 select-none">
+            <tr className="bg-slate-50/50 dark:bg-slate-900/80 border-b border-slate-150 dark:border-slate-800 text-slate-400 select-none whitespace-nowrap">
               <th className="p-3 text-center font-bold w-12">번호</th>
               <th className="p-3 font-bold w-28">이름</th>
               <th className="p-3 font-bold w-36">회사명</th>
