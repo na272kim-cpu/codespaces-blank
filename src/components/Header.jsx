@@ -19,16 +19,6 @@ export default function Header({ theme, toggleTheme, onShowPremium }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* 프리미엄 요금제 버튼 */}
-          <button
-            onClick={onShowPremium}
-            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            title="프리미엄 요금제 보기"
-          >
-            <i className="fa-solid fa-crown text-xs sm:text-sm"></i>
-            <span>Premium</span>
-          </button>
-
           {/* 테마 스위처 */}
           <button
             onClick={toggleTheme}
