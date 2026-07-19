@@ -145,20 +145,13 @@ export default function Uploader({
           />
 
           <div className="space-y-3">
-            <div className="w-12 h-12 mx-auto bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
-              <i className="fa-solid fa-cloud-arrow-up text-2xl text-primary-500"></i>
-            </div>
-            <div>
-              <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">
-                명함 이미지들을 끌어서 넣거나 클릭하세요
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                PNG, JPG, WEBP 지원 · 단축키 (Ctrl+V) 붙여넣기 지원
-              </p>
-            </div>
-            
-            {/* 링크 아이콘 버튼 (URL 입력) */}
-            <div className="pt-2 flex justify-center">
+            <div className="flex items-center justify-center gap-3">
+              {/* 업로드 아이콘 */}
+              <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
+                <i className="fa-solid fa-cloud-arrow-up text-2xl text-primary-500"></i>
+              </div>
+              
+              {/* 링크 아이콘 버튼 (URL 입력) */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -168,12 +161,19 @@ export default function Uploader({
                   }
                 }}
                 disabled={isProcessing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-12 h-12 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-500 hover:text-primary-500 dark:text-slate-400 dark:hover:text-primary-400 rounded-xl flex items-center justify-center shadow-md border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-all"
                 title="이미지 URL 주소 입력"
               >
-                <i className="fa-solid fa-link"></i>
-                <span>Enter Image URL</span>
+                <i className="fa-solid fa-link text-xl"></i>
               </button>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                명함 이미지들을 끌어서 넣거나 클릭하세요
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                PNG, JPG, WEBP 지원 · 단축키 (Ctrl+V) 붙여넣기 지원
+              </p>
             </div>
           </div>
         </div>
