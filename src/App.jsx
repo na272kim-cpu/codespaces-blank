@@ -494,6 +494,18 @@ export default function App() {
         </div>
       </main>
 
+      {/* 푸터 */}
+      <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/80 py-8 transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
+          <p>© 2026 OCR.GOOD Business Card Board.</p>
+          <div className="flex items-center gap-6">
+            <a href="terms.html" className="hover:text-primary-500 transition-colors">이용 약관</a>
+            <a href="privacy.html" className="hover:text-primary-500 transition-colors">개인정보 처리방침</a>
+            <a href="form.html" target="_blank" className="hover:text-primary-500 transition-colors">문의하기</a>
+          </div>
+        </div>
+      </footer>
+
       {/* 4. 애니메이션 알림 토스트 */}
       <div
         id="toast"
