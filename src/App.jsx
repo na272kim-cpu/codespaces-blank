@@ -236,6 +236,19 @@ export default function App() {
     showToast('선택하신 명함이 대기열에서 제거되었습니다.');
   };
 
+  // --- 외부 URL 이미지 직접 추가 ---
+  const handleAddCardDirectly = (cardObj) => {
+    const currentLen = cardQueue.length;
+    if (activePlan === 'FREE' && currentLen >= 50) {
+      setShowPremiumModal(true);
+      showToast('⚠️ Free Plan은 최대 50장까지만 업로드 및 처리가 가능합니다. 프로 요금제 또는 이벤트 패스로 업그레이드 해주세요!', 'error');
+      return;
+    }
+    
+    setCardQueue((prev) => [...prev, cardObj]);
+    showToast('🔗 URL 명함 이미지가 성공적으로 대기열에 추가되었습니다!');
+  };
+
   // --- 대기 대기열 완전 비우기 ---
   const handleClearQueue = () => {
     if (isProcessing) return;
@@ -475,6 +488,7 @@ export default function App() {
               onRemoveItem={handleRemoveQueueItem}
               onShowPremium={() => setShowPremiumModal(true)}
               activePlan={activePlan}
+              onAddCardDirectly={handleAddCardDirectly}
             />
           </div>
 
