@@ -44,6 +44,10 @@ export default function App() {
   // --- 프리미엄 모달 노출 상태 ---
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
+  // --- 활성 요금제 상태 ---
+  // 'FREE' | 'PRO' | 'EVENT'
+  const [activePlan, setActivePlan] = useState('FREE');
+
   // --- 테마 적용 ---
   useEffect(() => {
     if (theme === 'dark') {
@@ -145,10 +149,24 @@ export default function App() {
     }
 
     const currentLen = cardQueue.length;
-    const remainingSpace = 50 - currentLen;
+    const incomingLen = files.length;
+
+    // Free 요금제 대기열 한도(50장) 체크 및 프리미엄 모달 팝업
+    if (activePlan === 'FREE' && (currentLen + incomingLen >= 51)) {
+      setShowPremiumModal(true);
+      showToast('⚠️ Free Plan은 최대 50장까지만 업로드 및 처리가 가능합니다. 51장 이상의 대량 처리를 위해 프로 요금제 또는 이벤트 패스로 업그레이드 해주세요!', 'error');
+    }
+
+    // 요금제에 따른 남은 슬롯 수 계산
+    const maxLimit = activePlan === 'FREE' ? 50 : 1000;
+    const remainingSpace = maxLimit - currentLen;
 
     if (remainingSpace <= 0) {
-      showToast('이미 최대 개수인 50개 명함이 목록에 가득 찼습니다.', 'error');
+      if (activePlan === 'FREE') {
+        showToast('이미 최대 개수인 50개 명함이 목록에 가득 찼습니다. 프로 요금제 또는 이벤트 패스로 업그레이드하면 무제한 업로드가 가능합니다!', 'error');
+      } else {
+        showToast('이미 최대 대기열 한도인 1,000개 명함이 가득 찼습니다.', 'error');
+      }
       return;
     }
 
@@ -278,10 +296,10 @@ export default function App() {
       return;
     }
 
-    // 3개 이상 등록 시 프리미엄 제한 작동
-    if (cardQueue.length >= 3) {
+    // 51개 이상 등록 시 프리미엄 제한 작동
+    if (activePlan === 'FREE' && cardQueue.length >= 51) {
       setShowPremiumModal(true);
-      showToast('3개 이상의 명함 일괄 분석은 프리미엄 요금제 전용 기능입니다.', 'error');
+      showToast('⚠️ Free Plan은 최대 50장까지만 분석할 수 있습니다. 프로 요금제 또는 이벤트 패스로 업그레이드 해주세요!', 'error');
       return;
     }
 
@@ -456,6 +474,7 @@ export default function App() {
               onClearQueue={handleClearQueue}
               onRemoveItem={handleRemoveQueueItem}
               onShowPremium={() => setShowPremiumModal(true)}
+              activePlan={activePlan}
             />
           </div>
 
@@ -468,6 +487,8 @@ export default function App() {
               onClearAllRows={handleClearAllRows}
               onDeleteRow={handleDeleteRow}
               showToast={showToast}
+              activePlan={activePlan}
+              onShowPremium={() => setShowPremiumModal(true)}
             />
           </div>
         </div>
@@ -497,6 +518,8 @@ export default function App() {
         show={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         showToast={showToast}
+        activePlan={activePlan}
+        setActivePlan={setActivePlan}
       />
     </div>
   );

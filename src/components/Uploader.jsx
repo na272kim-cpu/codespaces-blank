@@ -9,7 +9,8 @@ export default function Uploader({
   onStartBatch,
   onClearQueue,
   onRemoveItem,
-  onShowPremium
+  onShowPremium,
+  activePlan = 'FREE'
 }) {
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -141,8 +142,8 @@ export default function Uploader({
         )}
       </div>
 
-      {/* 2개 초과 업로드 시 프리미엄 안내 배너 */}
-      {cardQueue.length >= 3 && (
+      {/* 50장 이상 업로드 시 프리미엄 안내 배너 */}
+      {activePlan === 'FREE' && cardQueue.length >= 50 && (
         <button
           onClick={onShowPremium}
           className="w-full p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white font-extrabold text-sm shadow-md shadow-orange-500/10 hover:shadow-orange-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-between gap-3 animate-fadeIn border border-amber-400"
@@ -153,7 +154,7 @@ export default function Uploader({
             </div>
             <div>
               <p className="font-black text-sm text-white">This mode is premium</p>
-              <p className="text-[10px] text-white/95 font-semibold mt-0.5">업로드 3개째부터는 프리미엄 요금제가 필요합니다.</p>
+              <p className="text-[10px] text-white/95 font-semibold mt-0.5">51장 이상 업로드 또는 다운로드는 프리미엄 요금제가 필요합니다.</p>
             </div>
           </div>
           <span className="text-[10px] bg-white text-orange-600 font-black px-2.5 py-1.5 rounded-xl shadow-sm whitespace-nowrap">

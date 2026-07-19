@@ -7,7 +7,9 @@ export default function DataTable({
   onAddEmptyRow,
   onClearAllRows,
   onDeleteRow,
-  showToast
+  showToast,
+  activePlan = 'FREE',
+  onShowPremium
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeZoomImage, setActiveZoomImage] = useState(null);
@@ -32,6 +34,11 @@ export default function DataTable({
 
   // Excel 파일 내보내기 (ExcelJS 기반 - 실제 이미지 시트 내장 방식)
   const handleExportExcel = async () => {
+    if (activePlan === 'FREE') {
+      showToast('⚠️ Free 요금제는 다운로드를 할 수 없습니다. 프로 요금제 또는 이벤트 패스로 업그레이드 해주세요!', 'error');
+      if (onShowPremium) onShowPremium();
+      return;
+    }
     if (sheetData.length === 0) {
       showToast('내보낼 데이터가 비어 있습니다.', 'error');
       return;
@@ -154,6 +161,11 @@ export default function DataTable({
 
   // CSV 내보내기 (UTF-8 BOM 추가)
   const handleExportCsv = () => {
+    if (activePlan === 'FREE') {
+      showToast('⚠️ Free 요금제는 다운로드를 할 수 없습니다. 프로 요금제 또는 이벤트 패스로 업그레이드 해주세요!', 'error');
+      if (onShowPremium) onShowPremium();
+      return;
+    }
     if (sheetData.length === 0) {
       showToast('내보낼 데이터가 비어 있습니다.', 'error');
       return;
