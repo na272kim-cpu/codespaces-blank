@@ -11,6 +11,33 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
 
   if (!show) return null;
 
+  const getBenefits = () => {
+    switch (selectedPlan) {
+      case 'FREE':
+        return [
+          { text: '명함 50장을 시트로 변환', enabled: true },
+          { text: '검색 및 수동 편집 가능', enabled: true },
+          { text: 'Excel, CSV 다운로드 불가', enabled: false }
+        ];
+      case 'PRO':
+        return [
+          { text: '월 1,000 크레딧', enabled: true },
+          { text: '명함을 시트로 변환', enabled: true },
+          { text: '검색 및 수동 편집 가능', enabled: true },
+          { text: 'Excel, CSV 다운로드 가능', enabled: true }
+        ];
+      case 'EVENT':
+        return [
+          { text: '3일간 무제한 사용', enabled: true },
+          { text: '명함을 시트로 변환', enabled: true },
+          { text: '검색 및 수동 편집 가능', enabled: true },
+          { text: 'Excel, CSV 다운로드 가능', enabled: true }
+        ];
+      default:
+        return [];
+    }
+  };
+
   const handleApplyPlan = () => {
     if (setActivePlan) {
       setActivePlan(selectedPlan);
@@ -56,7 +83,7 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
             <i className="fa-solid fa-crown text-2xl text-amber-500 animate-bounce"></i>
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">Card2Sheet 요금제 안내</h2>
-          <p className="text-slate-500 dark:text-slate-300 text-sm mt-1">업로드 용량 초과 또는 다운로드 기능을 위해 요금제를 선택해 주세요</p>
+          <p className="text-slate-500 dark:text-slate-300 text-sm mt-1">이 기능을 사용하려면 요금제를 업그레이드하세요.</p>
         </div>
 
         {/* 메인 콘텐츠 레이아웃 */}
@@ -64,28 +91,18 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
           
           {/* 왼쪽: 혜택 (Benefits) */}
           <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">요금제 선택 혜택</h3>
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">혜택</h3>
             <ul className="space-y-3">
-              <li className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
-                <span className="text-emerald-500 mr-2 font-bold">✓</span>
-                <span>50장 이상 대량 일괄 명함 분석</span>
-              </li>
-              <li className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
-                <span className="text-emerald-500 mr-2 font-bold">✓</span>
-                <span>이미지 내장 정식 Excel 다운로드</span>
-              </li>
-              <li className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
-                <span className="text-emerald-500 mr-2 font-bold">✓</span>
-                <span>범용 UTF-8 CSV 파일 내보내기</span>
-              </li>
-              <li className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
-                <span className="text-emerald-500 mr-2 font-bold">✓</span>
-                <span>안전한 AI 보안 명함 정제 지원</span>
-              </li>
-              <li className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
-                <span className="text-emerald-500 mr-2 font-bold">✓</span>
-                <span>실시간 데이터 검색 및 수동 편성이 가능</span>
-              </li>
+              {getBenefits().map((benefit, index) => (
+                <li key={index} className="flex items-start text-slate-700 dark:text-slate-200 text-xs">
+                  {benefit.enabled ? (
+                    <span className="text-emerald-500 mr-2 font-bold">✓</span>
+                  ) : (
+                    <span className="text-rose-500 mr-2 font-bold">✕</span>
+                  )}
+                  <span>{benefit.text}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -112,7 +129,6 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
                 <div className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-lg text-sm">🌱</div>
                 <div className="text-left">
                   <div className="font-bold text-slate-800 dark:text-white text-xs">Free Plan</div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-400">명함 50장 분석 / 다운로드 불가</div>
                 </div>
               </div>
               <div className="text-xs font-extrabold text-slate-600 dark:text-slate-300 whitespace-nowrap">Free</div>
@@ -138,7 +154,6 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
                 <div className="bg-amber-100 dark:bg-amber-950/40 p-1.5 rounded-lg text-sm">⭐</div>
                 <div className="text-left">
                   <div className="font-bold text-slate-800 dark:text-white text-xs">Pro Plan</div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-400">월 1,000 크레딧 / 다운로드 지원</div>
                 </div>
               </div>
               <div className="text-xs font-extrabold text-blue-600 dark:text-blue-400 whitespace-nowrap">$15/월</div>
@@ -164,7 +179,6 @@ export default function PremiumModal({ show, onClose, showToast, activePlan, set
                 <div className="bg-orange-100 dark:bg-orange-950/40 p-1.5 rounded-lg text-sm">⚡</div>
                 <div className="text-left">
                   <div className="font-bold text-slate-800 dark:text-white text-xs">Event Pass</div>
-                  <div className="text-[10px] text-slate-400 dark:text-slate-400">3일간 무제한 분석 / 일회성</div>
                 </div>
               </div>
               <div className="text-xs font-extrabold text-orange-600 dark:text-orange-400 whitespace-nowrap">$29/회</div>
