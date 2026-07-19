@@ -466,7 +466,7 @@ export default function App() {
         {/* 인트로 소개글 */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-black dark:text-white tracking-tight">
-            대량 명함 이미지를 텍스트로
+            명함 이미지를 텍스트로
           </h1>
           <p className="text-blue-600 dark:text-blue-400 text-sm sm:text-base font-bold">
             Card 2 Sheet OCR 프로그램

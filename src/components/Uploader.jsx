@@ -114,7 +114,7 @@ export default function Uploader({
       <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 shadow-sm">
         <h2 className="text-lg font-bold mb-4 flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <i className="fa-regular fa-images text-primary-500"></i> 대량 명함 업로드
+            <i className="fa-regular fa-images text-primary-500"></i> 명함 업로드
           </span>
           <span className="text-xs bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded-lg font-bold text-primary-600">
             {cardQueue.length} / {activePlan === 'FREE' ? '50' : '1,000'}
