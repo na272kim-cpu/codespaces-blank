@@ -89,7 +89,7 @@ export default function PremiumModal({ show, isOpen, onClose, showToast, activeP
           <p className="text-slate-500 dark:text-slate-300 mt-1">이 기능을 사용하려면 요금제를 업그레이드하세요.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-8">
           {/* 혜택 리스트 */}
           <div className="bg-slate-50 dark:bg-slate-900/30 rounded-2xl p-6 border border-slate-100 dark:border-slate-800/60 flex flex-col justify-center">
             <h3 className="font-bold text-slate-400 mb-4 text-sm uppercase tracking-wider">혜택</h3>
@@ -139,7 +139,10 @@ export default function PremiumModal({ show, isOpen, onClose, showToast, activeP
 
         {/* 액션 버튼 */}
         <div className="flex justify-between mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
-          <button onClick={onClose} className="px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-3 font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl transition"
+          >
             닫기
           </button>
           <button 
